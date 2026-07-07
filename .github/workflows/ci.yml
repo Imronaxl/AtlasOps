@@ -52,7 +52,7 @@ jobs:
         run: pip install yamllint
 
       - name: Run yamllint
-        run: yamllint -d relaxed docker-compose.yml monitoring/**/*.yml
+        run: yamllint -c .yamllint docker-compose.yml monitoring/**/*.yml
 
   test:
     name: Test
@@ -66,7 +66,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install -r api/requirements.txt
+        run: pip install -r api/requirements.txt pytest
 
       - name: Run tests
         run: cd api && python -m pytest tests/ -v --tb=short
