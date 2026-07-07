@@ -85,10 +85,10 @@ if [[ "$BACKUP_FILE" == *.gz ]]; then
         -d "${POSTGRES_DB:-infra_monitor}" \
         -q 2>/dev/null
 else
-    cat "$BACKUP_FILE" | docker exec -i "${CONTAINER}" psql \
+    docker exec -i "${CONTAINER}" psql \
         -U "${POSTGRES_USER:-infra_admin}" \
         -d "${POSTGRES_DB:-infra_monitor}" \
-        -q 2>/dev/null
+        -q 2>/dev/null < "$BACKUP_FILE"
 fi
 
 log "Verifying restore..."

@@ -53,7 +53,7 @@ COMPRESSED_SIZE=$(du -h "${BACKUP_DIR}/backup_${TIMESTAMP}.sql.gz" | cut -f1)
 success "Backup created: ${BACKUP_DIR}/backup_${TIMESTAMP}.sql.gz (${COMPRESSED_SIZE})"
 
 log "${BOLD}Rotating old backups (retention: ${RETENTION_DAYS} days)${NC}"
-DELETED=$(find "${BACKUP_DIR}" -name "backup_*.sql.gz" -mtime +${RETENTION_DAYS} -delete -print | wc -l)
+DELETED=$(find "${BACKUP_DIR}" -name "backup_*.sql.gz" -mtime +"${RETENTION_DAYS}" -delete -print | wc -l)
 if [[ "$DELETED" -gt 0 ]]; then
     log "Deleted ${DELETED} old backup(s)"
 else
