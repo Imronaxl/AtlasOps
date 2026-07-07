@@ -1,8 +1,8 @@
-# Infrastructure Monitoring Platform
+# Платформа мониторинга инфраструктуры
 
-Production-like infrastructure monitoring stack demonstrating operational practices.
+Продукционный стек мониторинга инфраструктуры, демонстрирующий эксплуатационные практики.
 
-## Architecture
+## Архитектура
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -154,12 +154,3 @@ Push/PR -> Lint -> Test -> Validate -> Build -> Security Scan
 - **Validate**: docker-compose config, Hadolint
 - **Build**: Multi-stage Docker builds with layer caching
 - **Security**: Trivy vulnerability scanner
-
-## Roadmap
-
-- [ ] Add Loki for log aggregation
-- [ ] Add Tempo for distributed tracing
-- [ ] Add MinIO for metrics long-term storage
-- [ ] Kubernetes deployment manifests
-- [ ] Terraform infrastructure provisioning
-- [ ] E2E integration tests
