@@ -1,0 +1,38 @@
+[Unit]
+Description=Infrastructure Monitoring Platform
+Documentation=https://github.com/ImronAXL/infra-monitor
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+WorkingDirectory=/opt/infra-monitor
+
+EnvironmentFile=-/opt/infra-monitor/.env
+Environment=COMPOSE_PROJECT_NAME=infra-monitor
+
+ExecStartPre=/usr/bin/docker compose config --quiet
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+ExecStart=/bin/bash -c 'sleep 10 && /opt/infra-monitor/scripts/healthcheck.sh'
+
+ExecStop=/usr/bin/docker compose down
+
+ExecReload=/usr/bin/docker compose up -d --remove-orphans
+
+Restart=on-failure
+RestartSec=30
+StartLimitBurst=3
+StartLimitIntervalSec=300
+
+TimeoutStartSec=120
+TimeoutStopSec=60
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=infra-monitor
+
+[Install]
+WantedBy=multi-user.target

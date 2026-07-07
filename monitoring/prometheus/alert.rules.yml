@@ -1,0 +1,112 @@
+groups:
+  - name: infrastructure
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes. Current value: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% for more than 5 minutes. Current value: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is above 85% for more than 5 minutes. Current value: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~".+"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} is down"
+          description: "Container {{ $labels.name }} has been down for more than 1 minute."
+
+      - alert: ContainerHighCPU
+        expr: sum(rate(container_cpu_usage_seconds_total{name=~".+"}[5m])) by (name) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU"
+          description: "Container CPU usage is above 80%. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes{name=~".+"} / container_spec_memory_limit_bytes{name=~".+"} * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high memory"
+          description: "Container memory usage is above 90% of limit."
+
+      - alert: APILatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency is high"
+          description: "API p95 latency is above 1 second for 5 minutes. Current: {{ $value | printf \"%.2f\" }}s"
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "More than 5% of requests are returning 5xx errors."
+
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} is down"
+          description: "Target {{ $labels.instance }} (job={{ $labels.job }}) has been down for more than 2 minutes."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / 1073741824) < 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Less than 5GB of disk space remaining. Current: {{ $value | printf \"%.1f\" }}GB"
+
+  - name: network
+    rules:
+      - alert: HighNetworkInbound
+        expr: rate(node_network_receive_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) * 8 > 100000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High inbound network traffic on {{ $labels.instance }}"
+          description: "Network inbound traffic is above 100Mbps for 5 minutes."
+
+      - alert: HighNetworkOutbound
+        expr: rate(node_network_transmit_bytes_total{device!~"lo|docker.*|br-.*|veth.*"}[5m]) * 8 > 100000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High outbound network traffic on {{ $labels.instance }}"
+          description: "Network outbound traffic is above 100Mbps for 5 minutes."
