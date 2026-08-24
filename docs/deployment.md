@@ -182,12 +182,3 @@ docker compose up -d
 docker system prune -a
 ```
 
-## Production Hardening
-
-- [ ] Enable TLS with certbot
-- [ ] Configure firewall rules
-- [ ] Set up log rotation in cron
-- [ ] Configure backup cron job
-- [ ] Enable Prometheus remote write
-- [ ] Add authentication to Grafana
-- [ ] Configure Alertmanager receivers
