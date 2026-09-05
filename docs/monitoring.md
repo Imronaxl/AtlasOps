@@ -1,116 +1,116 @@
-# Monitoring Stack
+# Стек мониторинга
 
-## Overview
+## Обзор
 
-The monitoring stack provides full observability into infrastructure and application metrics.
+Стек мониторинга обеспечивает полную наблюдаемость за метриками инфраструктуры и приложения.
 
-## Components
+## Компоненты
 
 ### Prometheus
 
-Time-series database for metrics collection.
+Time-series БД для сбора метрик.
 
-**Configuration**: `monitoring/prometheus/prometheus.yml`
+**Конфигурация**: `monitoring/prometheus/prometheus.yml`
 
-**Scrape Targets**:
-- Prometheus itself (self-monitoring)
-- Node Exporter (host metrics)
-- cAdvisor (container metrics)
-- FastAPI application
+**Таргеты скрейпинга**:
+- Prometheus (self-monitoring)
+- Node Exporter (метрики хоста)
+- cAdvisor (метрики контейнеров)
+- Приложение FastAPI
 - Nginx stub_status
 - Alertmanager
 
-**Retention**: 15 days (configurable via `PROMETHEUS_RETENTION`)
+**Хранение**: 15 дней (настраивается через `PROMETHEUS_RETENTION`)
 
 ### Grafana
 
-Visualization and dashboarding platform.
+Платформа визуализации и дашбордов.
 
 **Provisioning**: `monitoring/grafana/provisioning/`
-**Dashboards**: `monitoring/grafana/dashboards/`
+**Дашборды**: `monitoring/grafana/dashboards/`
 
-**Access**: http://localhost:3000
+**Доступ**: http://localhost:3000
 
 ### Alertmanager
 
-Alert routing and notification.
+Маршрутизация алертов и нотификации.
 
-**Configuration**: `monitoring/alertmanager/config.yml`
+**Конфигурация**: `monitoring/alertmanager/config.yml`
 
-**Receivers**:
-- Webhook (configurable URL)
-- Email (SMTP configurable)
+**Получатели**:
+- Webhook (настраиваемый URL)
+- Email (SMTP настраивается)
 
 ### Node Exporter
 
-Host-level metrics collector.
+Сборщик метрик на уровне хоста.
 
-**Metrics**: CPU, Memory, Disk, Network, Filesystem
+**Метрики**: CPU, Memory, Disk, Network, Filesystem
 
 ### cAdvisor
 
-Container resource monitoring.
+Мониторинг ресурсов контейнеров.
 
-**Metrics**: Container CPU, Memory, Network, Filesystem
+**Метрики**: CPU контейнера, Memory, Network, Filesystem
 
-## Dashboard Panels
+## Панели дашборда
 
-### System Overview
+### Обзор системы
 - CPU Usage (stat)
 - Memory Usage (stat)
 - Disk Usage (stat)
 - Active Containers (stat)
 
-### CPU & Memory
+### CPU и память
 - CPU Usage Over Time (timeseries)
 - Memory Usage Over Time (timeseries)
 
-### Containers
+### Контейнеры
 - Container CPU Usage (timeseries)
 - Container Memory Usage (timeseries)
 
-### Network
+### Сеть
 - Network Receive (timeseries)
 - Network Transmit (timeseries)
 
-### API Metrics
+### Метрики API
 - API Request Rate (timeseries)
 - API Latency p95 (timeseries)
 
-### Disk
+### Диск
 - Disk Space (timeseries)
 - Disk I/O (timeseries)
 
-## Alert Rules
+## Правила алертов
 
-### Infrastructure Alerts
+### Инфраструктурные алерты
 
-| Alert | Expr | For | Severity |
-|-------|------|-----|----------|
+| Алерт | Условие | Длительность | Severity |
+|-------|---------|--------------|----------|
 | HighCPUUsage | CPU > 80% | 5m | warning |
 | HighMemoryUsage | Memory > 90% | 5m | warning |
 | HighDiskUsage | Disk > 85% | 5m | warning |
-| ContainerDown | Container down | 1m | critical |
-| ContainerHighCPU | Container CPU > 80% | 5m | warning |
-| ContainerHighMemory | Container Memory > 90% | 5m | warning |
+| ContainerDown | Контейнер упал | 1m | critical |
+| ContainerHighCPU | CPU контейнера > 80% | 5m | warning |
+| ContainerHighMemory | Memory контейнера > 90% | 5m | warning |
 
-### Application Alerts
+### Прикладные алерты
 
-| Alert | Expr | For | Severity |
-|-------|------|-----|----------|
+| Алерт | Условие | Длительность | Severity |
+|-------|---------|--------------|----------|
 | APILatencyHigh | p95 > 1s | 5m | warning |
 | HighErrorRate | 5xx > 5% | 5m | critical |
 
-### Network Alerts
+### Сетевые алерты
 
-| Alert | Expr | For | Severity |
-|-------|------|-----|----------|
+| Алерт | Условие | Длительность | Severity |
+|-------|---------|--------------|----------|
 | HighNetworkInbound | > 100Mbps | 5m | warning |
 | HighNetworkOutbound | > 100Mbps | 5m | warning |
 
-## Adding Custom Metrics
+## Добавление кастомных метрик
 
-### In Python API
+### В Python API
 
 ```python
 from prometheus_client import Counter, Histogram
@@ -124,9 +124,9 @@ REQUEST_COUNT = Counter(
 REQUEST_COUNT.labels(label1="value1", label2="value2").inc()
 ```
 
-### In Prometheus Config
+### В конфиге Prometheus
 
-Add new scrape target:
+Добавить новый таргет скрейпинга:
 
 ```yaml
 - job_name: "my-service"
@@ -134,22 +134,22 @@ Add new scrape target:
     - targets: ["my-service:9090"]
 ```
 
-## Troubleshooting
+## Траблшутинг
 
-### Prometheus not scraping
+### Prometheus не скрейпит
 
-1. Check target status: http://localhost:9090/targets
-2. Verify network connectivity
-3. Check scrape interval in config
+1. Проверить статус таргетов: http://localhost:9090/targets
+2. Проверить сетевую доступность
+3. Проверить scrape interval в конфиге
 
-### Grafana dashboard not showing data
+### Дашборд Grafana не показывает данные
 
-1. Verify datasource is configured
-2. Check Prometheus is reachable from Grafana
-3. Verify query syntax in panel editor
+1. Проверить, что datasource настроен
+2. Убедиться, что Prometheus достижим из Grafana
+3. Проверить синтаксис запроса в редакторе панели
 
-### Alerts not firing
+### Алерты не срабатывают
 
-1. Check alert rules are loaded: http://localhost:9090/rules
-2. Verify Alertmanager is running
-3. Check Alertmanager config for routing issues
+1. Проверить, что правила загружены: http://localhost:9090/rules
+2. Убедиться, что Alertmanager запущен
+3. Проверить конфиг Alertmanager на предмет ошибок маршрутизации
