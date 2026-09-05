@@ -1,10 +1,10 @@
-# Architecture
+# Архитектура
 
-## Overview
+## Обзор
 
-Infrastructure Monitoring Platform is a production-like monitoring stack built with containerized services.
+Платформа мониторинга инфраструктуры — production-подобный стек мониторинга, собранный из контейнеризованных сервисов.
 
-## Service Communication
+## Взаимодействие сервисов
 
 ```
                     ┌──────────────────────────────────────┐
@@ -31,61 +31,61 @@ Infrastructure Monitoring Platform is a production-like monitoring stack built w
                     └──────────────────────────────────────┘
 ```
 
-## Data Flow
+## Поток данных
 
-### Metrics Pipeline
+### Пайплайн метрик
 
-1. **Collection**: Prometheus scrapes targets every 15s
-2. **Storage**: Time-series data stored in Prometheus TSDB
-3. **Visualization**: Grafana queries Prometheus for dashboards
-4. **Alerting**: Prometheus evaluates rules, sends to Alertmanager
-5. **Notification**: Alertmanager routes alerts via webhook/email
+1. **Сбор**: Prometheus скрейпит таргеты каждые 15s
+2. **Хранение**: Time-series данные пишутся в TSDB Prometheus
+3. **Визуализация**: Grafana запрашивает Prometheus для дашбордов
+4. **Алертинг**: Prometheus вычисляет правила и отправляет в Alertmanager
+5. **Нотификации**: Alertmanager маршрутизирует алерты через webhook/email
 
-### API Request Flow
+### Поток API-запросов
 
 ```
-Client → Nginx (rate limit, security headers) → FastAPI (metrics, logging) → Response
+Клиент → Nginx (rate limit, security headers) → FastAPI (metrics, logging) → Ответ
                                      ↓
-                              Prometheus (request metrics)
+                              Prometheus (метрики запросов)
 ```
 
-## Design Decisions
+## Архитектурные решения
 
-### Why Nginx as Frontend?
+### Почему Nginx как frontend?
 
-- Battle-tested reverse proxy
-- Rate limiting at edge protects API
-- Security headers without application changes
-- TLS termination point (add certbot for production)
+- Проверенный в боях reverse proxy
+- Rate limiting на edge защищает API
+- Security-заголовки без изменений в приложении
+- Точка терминирования TLS (для прода — добавить certbot)
 
-### Why FastAPI?
+### Почему FastAPI?
 
-- Async-native (handles concurrent connections efficiently)
-- Auto-generated OpenAPI docs
-- Type safety with Pydantic
-- Prometheus instrumentation built-in
+- Async-native (эффективно обрабатывает конкурентные соединения)
+- Автоматическая генерация OpenAPI-документации
+- Типобезопасность через Pydantic
+- Встроенная инструментация Prometheus
 
-### Why Structured Logging?
+### Почему структурное логирование?
 
-- Machine-parseable logs
-- Enables log aggregation (Loki, ELK)
-- Correlation IDs across services
-- Performance analysis via structured fields
+- Машиночитаемые логи
+- Включает агрегацию логов (Loki, ELK)
+- Correlation ID между сервисами
+- Анализ производительности через структурированные поля
 
-## Network Security
+## Сетевая безопасность
 
-- All services bind to `127.0.0.1` except internal bridge
-- Nginx exposes only port 80 externally
-- Metrics endpoints restricted to internal network
-- Redis requires authentication
-- PostgreSQL uses dedicated user with limited privileges
+- Все сервисы биндятся на `127.0.0.1` кроме внутреннего bridge
+- Nginx снаружи открывает только порт 80
+- Метрики-эндпоинты ограничены внутренней сетью
+- Redis требует аутентификации
+- PostgreSQL использует выделенного пользователя с ограниченными правами
 
-## Health Checks
+## Health-чеки
 
-Every container has a health check:
+У каждого контейнера есть health-check:
 
-| Service | Check | Interval | Timeout |
-|---------|-------|----------|---------|
+| Сервис | Проверка | Интервал | Таймаут |
+|--------|----------|----------|---------|
 | nginx | curl /health | 15s | 5s |
 | api | curl /health | 15s | 5s |
 | postgres | pg_isready | 10s | 5s |
@@ -96,12 +96,12 @@ Every container has a health check:
 | node-exporter | wget /metrics | 15s | 5s |
 | cadvisor | wget /healthz | 15s | 5s |
 
-## Scaling Considerations
+## Масштабирование
 
-Current design is single-node. To scale:
+Текущая архитектура — single-node. Для масштабирования:
 
-1. **API**: Add replicas behind nginx upstream
-2. **PostgreSQL**: Primary-replica setup with PgBouncer
-3. **Redis**: Sentinel for HA, or Redis Cluster
-4. **Prometheus**: Thanos for long-term storage and federation
-5. **Grafana**: HA with shared database backend
+1. **API**: Реплики за nginx upstream
+2. **PostgreSQL**: Primary-replica с PgBouncer
+3. **Redis**: Sentinel для HA или Redis Cluster
+4. **Prometheus**: Thanos для долгого хранения и федерации
+5. **Grafana**: HA с shared database backend

@@ -1,17 +1,17 @@
-# Deployment Guide
+# Руководство по деплою
 
-## Prerequisites
+## Требования
 
 - Docker Engine 24.0+
 - Docker Compose v2.20+
 - bash 5.0+
 - curl, gzip
 
-## Quick Start
+## Быстрый старт
 
 ```bash
-git clone https://github.com/ImronAXL/infra-monitor.git
-cd infra-monitor
+git clone https://github.com/ImronAXL/AtlasOps.git
+cd AtlasOps
 cp .env.example .env
 nano .env
 
@@ -19,22 +19,22 @@ make up
 make healthcheck
 ```
 
-## Environment Configuration
+## Конфигурация окружения
 
-Copy `.env.example` to `.env` and configure:
+Скопировать `.env.example` в `.env` и настроить:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| POSTGRES_USER | Database user | infra_admin |
-| POSTGRES_PASSWORD | Database password | (required) |
-| POSTGRES_DB | Database name | infra_monitor |
-| REDIS_PASSWORD | Redis password | (required) |
-| GF_SECURITY_ADMIN_USER | Grafana admin user | admin |
-| GF_SECURITY_ADMIN_PASSWORD | Grafana admin password | (required) |
+| Переменная | Описание | Значение по умолчанию |
+|-----------|----------|------------------------|
+| POSTGRES_USER | Пользователь БД | infra_admin |
+| POSTGRES_PASSWORD | Пароль БД | (обязательно) |
+| POSTGRES_DB | Имя БД | infra_monitor |
+| REDIS_PASSWORD | Пароль Redis | (обязательно) |
+| GF_SECURITY_ADMIN_USER | Админ Grafana | admin |
+| GF_SECURITY_ADMIN_PASSWORD | Пароль админа Grafana | (обязательно) |
 
-## Deployment Methods
+## Способы деплоя
 
-### Method 1: Makefile (Recommended)
+### Способ 1: Makefile (рекомендуется)
 
 ```bash
 make up
@@ -45,20 +45,20 @@ make logs
 make healthcheck
 ```
 
-### Method 2: Deploy Script (Zero-Downtime)
+### Способ 2: Деплой-скрипт (zero-downtime)
 
 ```bash
 ./scripts/deploy.sh
 ```
 
-Features:
-- Pre-flight validation
-- Image pull and build
-- Rolling deployment
-- Health check verification
-- Automatic cleanup
+Возможности:
+- Pre-flight валидация
+- Pull и сборка образов
+- Rolling-деплой
+- Проверка health-check
+- Автоматическая очистка
 
-### Method 3: Docker Compose
+### Способ 3: Docker Compose
 
 ```bash
 docker compose up -d
@@ -66,9 +66,9 @@ docker compose ps
 docker compose logs -f
 ```
 
-## Backup and Restore
+## Бэкап и восстановление
 
-### Backup PostgreSQL
+### Бэкап PostgreSQL
 
 ```bash
 make backup
@@ -76,9 +76,9 @@ make backup
 ./scripts/backup.sh
 ```
 
-Backups are stored in `${BACKUP_DIR:-/opt/backups/infra-monitor}`
+Бэкапы хранятся в `${BACKUP_DIR:-/opt/backups/infra-monitor}`
 
-### Restore PostgreSQL
+### Восстановление PostgreSQL
 
 ```bash
 ./scripts/restore.sh
@@ -86,20 +86,20 @@ Backups are stored in `${BACKUP_DIR:-/opt/backups/infra-monitor}`
 ./scripts/restore.sh /opt/backups/infra-monitor/backup_20240101_120000.sql.gz
 ```
 
-## Log Management
+## Управление логами
 
-### Rotate Logs
+### Ротация логов
 
 ```bash
 make rotate-logs
 ```
 
-Features:
-- Truncates oversized container logs (>50MB)
-- Deletes old log files (>30 days)
-- Reports current log sizes
+Возможности:
+- Обрезает превышающие размер логи контейнеров (>50MB)
+- Удаляет старые файлы логов (>30 дней)
+- Отчитывается о текущих размерах логов
 
-### Follow Logs
+### Следование за логами
 
 ```bash
 make logs
@@ -107,34 +107,34 @@ make logs-api
 make logs-prometheus
 ```
 
-## Cleanup
+## Очистка
 
-### Safe Cleanup (dry-run first)
+### Безопасная очистка (сначала dry-run)
 
 ```bash
 ./scripts/cleanup.sh --dry-run
 ./scripts/cleanup.sh
 ```
 
-### Nuclear Option (removes everything)
+### Полная очистка (удаляет всё)
 
 ```bash
 make nuke
 ```
 
-## Health Checks
+## Health-чеки
 
 ```bash
 make healthcheck
 ```
 
-Checks:
-- Container health status
-- HTTP endpoint responses
-- Disk usage
-- Memory usage
+Проверяет:
+- Статус здоровья контейнеров
+- Ответы HTTP-эндпоинтов
+- Использование диска
+- Использование памяти
 
-## Systemd Installation
+## Установка через systemd
 
 ```bash
 sudo cp systemd/infra-monitor.service /etc/systemd/system/
@@ -151,16 +151,16 @@ sudo systemctl start infra-monitor
 sudo systemctl status infra-monitor
 ```
 
-## Troubleshooting
+## Траблшутинг
 
-### Container won't start
+### Контейнер не запускается
 
 ```bash
 docker compose logs <service-name>
 docker inspect <container-name>
 ```
 
-### Port already in use
+### Порт уже занят
 
 ```bash
 sudo lsof -i :<port>
@@ -175,10 +175,9 @@ docker compose down -v
 docker compose up -d
 ```
 
-### Out of disk space
+### Закончилось место на диске
 
 ```bash
 ./scripts/cleanup.sh
 docker system prune -a
 ```
-
