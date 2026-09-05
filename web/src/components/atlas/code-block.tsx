@@ -5,7 +5,6 @@ import { Check, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/format";
 
-/** Code/command block with a copy button. */
 export function CodeBlock({
   code,
   language = "bash",

@@ -1,11 +1,3 @@
-"""Service registry.
-
-Stores the list of monitored services, their current status and metadata.
-In production, this data would come from the database (services table).
-For demo purposes (and to let the UI work without running Postgres),
-we return a static snapshot — handy for portfolio demos.
-"""
-
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -23,21 +15,16 @@ ServiceStatus = Literal["healthy", "degraded", "unhealthy", "unknown"]
 
 
 class ServiceInfo(BaseModel):
-    """Description of a single infrastructure service."""
-
     name: str = Field(..., description="Container / service name")
     kind: str = Field(..., description="Category: proxy, app, db, cache, monitor, exporter")
     status: ServiceStatus = Field(..., description="Current health-check status")
     port: int = Field(..., description="Port exposed by the service")
     image: str = Field(..., description="Docker image")
     uptime_seconds: float = Field(..., description="How long the service has been running")
-    description: str = Field("", description="What this service does, in plain language")
+    description: str = Field("", description="What this service does")
     depends_on: list[str] = Field(default_factory=list, description="Services this one depends on")
 
 
-# Initial infrastructure snapshot.
-# Ports and images mirror docker-compose.yml so that the UI and compose
-# always speak about the same thing — this reduces confusion during reviews.
 _DEFAULT_SERVICES: list[ServiceInfo] = [
     ServiceInfo(
         name="nginx",
@@ -134,12 +121,6 @@ _DEFAULT_SERVICES: list[ServiceInfo] = [
 
 @router.get("/services", response_model=list[ServiceInfo])
 async def list_services():
-    """Return all services from the registry.
-
-    Useful for the dashboard summary and the status table on the frontend.
-    We log the call here so that every public endpoint has explicit logging,
-    not only the middleware-level one.
-    """
     settings = get_settings()
     logger.info("services_list", env=settings.environment, count=len(_DEFAULT_SERVICES))
     return _DEFAULT_SERVICES
@@ -147,7 +128,6 @@ async def list_services():
 
 @router.get("/services/{name}", response_model=ServiceInfo)
 async def get_service(name: str):
-    """Return a single service by name. 404 if not found."""
     for s in _DEFAULT_SERVICES:
         if s.name == name:
             return s
@@ -157,11 +137,6 @@ async def get_service(name: str):
 
 @router.get("/services/{name}/health")
 async def service_health(name: str):
-    """Simplified health-check for a specific service.
-
-    Returns only the fields needed for a UI status-badge:
-    name, status, timestamp. No extra payload.
-    """
     for s in _DEFAULT_SERVICES:
         if s.name == name:
             return {

@@ -1,11 +1,3 @@
-"""Architecture snapshot for the frontend.
-
-Returns the service graph (nodes + edges) in a format that is easy to
-render as an interactive diagram. The data is static because topology
-changes rarely, and running docker inspect on every request would be
-expensive and brittle.
-"""
-
 import structlog
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
@@ -15,39 +7,28 @@ logger = structlog.get_logger()
 
 
 class ArchNode(BaseModel):
-    """A single block on the diagram."""
-
     id: str
     label: str
     kind: str = Field(..., description="proxy | app | db | cache | monitor | exporter | external")
     port: int | None = None
     description: str = ""
-    # Coordinates in a 12x6 grid — the frontend positions blocks using them.
-    # This is simpler than pulling a graph library: the topology is linear
-    # and well-known, manual layout reads better than auto-layout.
     x: int
     y: int
 
 
 class ArchEdge(BaseModel):
-    """Connection between blocks: who calls whom."""
-
     source: str
     target: str
     label: str = ""
-    # The frontend uses the kind to draw different arrow styles:
-    # http — solid, scrape — dashed, depend — thin grey.
     kind: str = "http"
 
 
 class Architecture(BaseModel):
-    """Full graph: nodes + edges + legend metadata."""
-
     nodes: list[ArchNode]
     edges: list[ArchEdge]
     legend: dict[str, str] = Field(
         default_factory=dict,
-        description="kind -> human description for the diagram legend",
+        description="kind -> human description",
     )
 
 
@@ -172,6 +153,5 @@ _ARCH = Architecture(
 
 @router.get("/architecture", response_model=Architecture)
 async def get_architecture():
-    """Return the service graph for the interactive diagram."""
     logger.info("architecture_served", nodes=len(_ARCH.nodes), edges=len(_ARCH.edges))
     return _ARCH

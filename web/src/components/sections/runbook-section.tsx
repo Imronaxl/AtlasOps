@@ -9,7 +9,6 @@ import { severityBadgeClasses } from "@/lib/format";
 import { CodeBlock } from "@/components/atlas/code-block";
 import type { Runbook } from "@/lib/types";
 
-/** Runbook: operational procedures with step-by-step instructions. */
 export function RunbookSection() {
   const [runbooks, setRunbooks] = useState<Runbook[]>(MOCK_RUNBOOKS);
   const [open, setOpen] = useState<string | null>("deploy");

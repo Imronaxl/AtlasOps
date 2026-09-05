@@ -5,7 +5,6 @@ import { statusBadgeClasses } from "@/lib/format";
 import type { ServiceStatus } from "@/lib/types";
 import { StatusDot } from "./status-dot";
 
-/** Compact status badge: dot + text. */
 export function StatusBadge({
   status,
   className,

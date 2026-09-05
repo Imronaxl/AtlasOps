@@ -1,6 +1,3 @@
-"""Tests for the dashboard-facing API routes."""
-
-
 def test_services_list(client):
     response = client.get("/api/services")
     assert response.status_code == 200
@@ -49,7 +46,6 @@ def test_incidents_list(client):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    # Sorted newest first.
     assert data == sorted(data, key=lambda i: i["created_at"], reverse=True)
 
 

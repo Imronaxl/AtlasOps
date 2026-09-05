@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 
-/** KPI card for the dashboard: icon + value + label + delta. */
 export function KpiCard({
   label,
   value,

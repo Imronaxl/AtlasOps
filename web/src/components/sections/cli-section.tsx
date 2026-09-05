@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Terminal as TerminalIcon, Play, Pause, RotateCcw } from "lucide-react";
 import { MOCK_CLI_DEMO } from "@/lib/mock-data";
 
-/** CLI: animated terminal demo with typical make commands. */
 export function CliSection() {
   const [stepIdx, setStepIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -14,12 +13,12 @@ export function CliSection() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const step = MOCK_CLI_DEMO[stepIdx];
 
-  // Typing effect for the command and a line-by-line reveal of the output.
+  
   useEffect(() => {
     if (!playing) return;
 
-    // Reset state via microtask to avoid a synchronous re-render inside
-    // the effect body (React 19 lint rule).
+    
+    
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
@@ -27,15 +26,15 @@ export function CliSection() {
       setVisibleLines(0);
     });
 
-    // 1. Show the command immediately.
+    
     const cmdTimer = setTimeout(() => {
       if (!cancelled) setShowCommand(true);
     }, 200);
 
-    // 2. Reveal output line by line.
+    
     let lineIdx = 0;
-    // Store the next-step timer id in a closure variable.
-    // Earlier we tried to attach a property to a number, which crashed.
+    
+    
     let nextTimer: ReturnType<typeof setTimeout> | null = null;
     const lineTimer = setInterval(() => {
       if (cancelled) return;
@@ -43,7 +42,7 @@ export function CliSection() {
       setVisibleLines(lineIdx);
       if (lineIdx >= step.output.length) {
         clearInterval(lineTimer);
-        // 3. Wait and switch to the next step.
+        
         nextTimer = setTimeout(() => {
           if (!cancelled) setStepIdx((prev) => (prev + 1) % MOCK_CLI_DEMO.length);
         }, 1800);
@@ -58,7 +57,7 @@ export function CliSection() {
     };
   }, [stepIdx, playing, step.output.length]);
 
-  // Auto-scroll to bottom.
+  
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
@@ -102,7 +101,7 @@ export function CliSection() {
         </div>
       </div>
 
-      {/* Step progress */}
+      {}
       <div className="flex flex-wrap gap-1.5">
         {MOCK_CLI_DEMO.map((s, i) => (
           <button
@@ -122,9 +121,9 @@ export function CliSection() {
         ))}
       </div>
 
-      {/* Terminal */}
+      {}
       <div className="rounded-lg overflow-hidden border border-border">
-        {/* Terminal title bar — three colored dots */}
+        {}
         <div className="flex items-center gap-2 px-3 py-2 bg-background/60 border-b border-border">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-status-unhealthy" />
@@ -136,7 +135,7 @@ export function CliSection() {
           </span>
         </div>
 
-        {/* Terminal body */}
+        {}
         <div
           ref={terminalRef}
           className="terminal p-4 h-[400px] overflow-y-auto atlas-scroll"
@@ -183,7 +182,7 @@ export function CliSection() {
         </div>
       </div>
 
-      {/* Current command explanation */}
+      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-mono text-muted-foreground">

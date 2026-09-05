@@ -25,7 +25,6 @@ import { CliSection } from "@/components/sections/cli-section";
 import { pingApi } from "@/lib/api";
 import type { SectionId } from "@/lib/types";
 
-/** Navigation config: single source of truth for sidebar and mobile menu. */
 const NAV: { id: SectionId; label: string; icon: React.ReactNode; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: <Activity className="w-4 h-4" />, hint: "KPIs, metrics, active incidents" },
   { id: "architecture", label: "Architecture", icon: <Boxes className="w-4 h-4" />, hint: "Interactive service diagram" },
@@ -40,11 +39,11 @@ export default function Home() {
   const [section, setSection] = useState<SectionId>("dashboard");
   const [apiLive, setApiLive] = useState<boolean | null>(null);
 
-  // On page load, check API availability for the header indicator.
+  
   useEffect(() => {
     pingApi().then(setApiLive);
-    // And recheck every 30s — if someone brings up docker-compose,
-    // the indicator switches from "demo" to "live".
+    
+    
     const t = setInterval(() => {
       pingApi().then(setApiLive);
     }, 30000);
@@ -55,11 +54,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
+      {}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="flex items-center justify-between px-4 lg:px-6 h-14">
           <div className="flex items-center gap-3">
-            {/* Logo */}
+            {}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded bg-gradient-to-br from-status-healthy/30 to-status-healthy/5 border border-status-healthy/30 flex items-center justify-center font-mono text-xs font-bold text-status-healthy">
                 A
@@ -74,7 +73,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* live/demo indicator */}
+            {}
             <div className="flex items-center gap-1.5 text-xs">
               {apiLive === null ? (
                 <span className="text-muted-foreground">checking...</span>
@@ -91,7 +90,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* GitHub link */}
+            {}
             <a
               href="https://github.com/imronaxl/atlasops"
               target="_blank"
@@ -105,9 +104,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Body: sidebar + content */}
+      {}
       <div className="flex-1 flex">
-        {/* Sidebar — desktop */}
+        {}
         <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card/30 shrink-0">
           <nav className="p-3 space-y-1">
             {NAV.map((item) => (
@@ -127,7 +126,7 @@ export default function Home() {
             ))}
           </nav>
 
-          {/* Current section hint */}
+          {}
           <div className="mt-auto p-3 border-t border-border">
             <div className="text-xs text-muted-foreground">
               <div className="font-mono mb-1 text-foreground">{currentNav?.label}</div>
@@ -135,7 +134,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Footer tag */}
+          {}
           <div className="p-3 border-t border-border">
             <div className="text-[10px] text-muted-foreground font-mono">
               v1.0.0 · FastAPI · Next.js
@@ -143,7 +142,7 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Mobile horizontal nav */}
+        {}
         <div className="lg:hidden flex border-b border-border overflow-x-auto atlas-scroll bg-card/30">
           {NAV.map((item) => (
             <button
@@ -162,7 +161,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Main content */}
+        {}
         <main className="flex-1 min-w-0 p-4 lg:p-6">
           <AnimatePresence mode="wait">
             <motion.div
@@ -184,7 +183,7 @@ export default function Home() {
         </main>
       </div>
 
-      {/* Footer */}
+      {}
       <footer className="border-t border-border bg-card/30">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 lg:px-6 py-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">

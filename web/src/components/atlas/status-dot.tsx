@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import type { ServiceStatus } from "@/lib/types";
 
-/** Pulsing status dot — like Grafana. */
 export function StatusDot({
   status,
   className,

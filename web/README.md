@@ -1,19 +1,19 @@
-# AtlasOps Dashboard (frontend)
+# AtlasOps Dashboard (фронтенд)
 
-Web dashboard for the AtlasOps infrastructure monitoring platform.
+Веб-дашборд для платформы мониторинга инфраструктуры AtlasOps.
 Next.js 16 + TypeScript + Tailwind CSS 4 + shadcn/ui + framer-motion + Recharts.
 
-## What it is
+## Что это
 
-A UI layer on top of the FastAPI API (`../api/`) that lets you:
+UI-слой поверх FastAPI API (`../api/`), который позволяет:
 
-- See the live status of every service and metric
-- Explore the architecture through an interactive diagram
-- Read the incident log and the operational runbook
-- Call API endpoints through an interactive explorer
-- Watch an animated demo of typical CLI operations
+- Видеть live-статус каждого сервиса и метрики
+- Изучать архитектуру через интерактивную схему
+- Читать журнал инцидентов и операционный runbook
+- Дёргать API-эндпоинты через интерактивный проводник
+- Смотреть анимированное демо типичных CLI-операций
 
-## Run
+## Запуск
 
 ```bash
 cd web
@@ -21,62 +21,57 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-By default the frontend talks to `http://localhost:8000` (where the FastAPI
-from `../docker-compose.yml` lives). To point it elsewhere:
+По умолчанию фронтенд ходит на `http://localhost:8000` (где живёт FastAPI из `../docker-compose.yml`). Чтобы указать другой URL:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://my-api.local:8000 npm run dev
 ```
 
-### Demo mode
+### Demo-режим
 
-If the FastAPI backend is not running, the UI does not crash — it switches to
-mock data from `src/lib/mock-data.ts`. The header then shows a `demo` badge
-instead of `live`. Handy for portfolio demos without spinning up Docker.
+Если FastAPI-бэкенд не запущен, UI не падает — он переключается на мок-данные из `src/lib/mock-data.ts`. В шапке при этом виден бейдж `demo` вместо `live`. Удобно для демо на портфолио без поднятия Docker.
 
-## Structure
+## Структура
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx          # root layout, dark theme
-│   ├── page.tsx            # main page: sidebar + section router
-│   └── globals.css         # Tailwind + custom styles (terminal, glow, scanlines)
+│   ├── layout.tsx          # корневой layout, тёмная тема
+│   ├── page.tsx            # главная страница: sidebar + роутер секций
+│   └── globals.css         # Tailwind + кастомные стили (terminal, glow, scanlines)
 ├── components/
-│   ├── atlas/              # reusable atoms
+│   ├── atlas/              # переиспользуемые атомы
 │   │   ├── status-dot.tsx
 │   │   ├── status-badge.tsx
 │   │   ├── code-block.tsx
 │   │   └── kpi-card.tsx
-│   └── sections/           # seven navigation sections
-│       ├── dashboard-section.tsx      # KPIs, charts, active incidents
-│       ├── architecture-section.tsx   # interactive service diagram
-│       ├── services-section.tsx       # table + service cards
-│       ├── incidents-section.tsx      # timeline with filters
-│       ├── runbook-section.tsx        # operational procedures
-│       ├── api-section.tsx            # API explorer
-│       └── cli-section.tsx            # animated terminal
+│   └── sections/           # семь секций навигации
+│       ├── dashboard-section.tsx      # KPI, графики, активные инциденты
+│       ├── architecture-section.tsx   # интерактивная схема сервисов
+│       ├── services-section.tsx       # таблица + карточки сервисов
+│       ├── incidents-section.tsx      # таймлайн с фильтрами
+│       ├── runbook-section.tsx        # операционные процедуры
+│       ├── api-section.tsx            # проводник по API
+│       └── cli-section.tsx            # анимированный терминал
 └── lib/
-    ├── types.ts            # shared contract with the backend
-    ├── api.ts              # fetcher with mock fallback
-    ├── mock-data.ts        # mirror mocks for demo mode
-    └── format.ts           # formatting utilities
+    ├── types.ts            # общий контракт с бэкендом
+    ├── api.ts              # fetcher с fallback на мок
+    ├── mock-data.ts        # зеркальные моки для demo-режима
+    └── format.ts           # утилиты форматирования
 ```
 
-## Sync with the backend
+## Синхронизация с бэкендом
 
-The type contract lives in `src/lib/types.ts`. It must match the Pydantic
-schemas in `../api/src/routes/*.py`. If the backend response shape changes,
-update both the types and the mock data so the UI and API stay in sync.
+Контракт типов живёт в `src/lib/types.ts`. Он должен соответствовать Pydantic-схемам в `../api/src/routes/*.py`. Если на бэкене меняется форма ответа — обновляем и типы, и мок-данные, чтобы UI и API не разъезжались.
 
-## Tech
+## Технологии
 
-| Tech | Why |
-|------|-----|
-| Next.js 16 | App Router, RSC, fast refresh |
-| TypeScript 5 | strict typing of the API contract |
-| Tailwind CSS 4 | styling without CSS-in-JS |
-| shadcn/ui | ready-made Radix components |
-| framer-motion | section transitions and pulsing dots |
-| Recharts | live metric charts |
-| lucide-react | icons |
+| Технология | Зачем |
+|------------|-------|
+| Next.js 16 | App Router, RSC, быстрый refresh |
+| TypeScript 5 | строгая типизация контракта с API |
+| Tailwind CSS 4 | стилизация без CSS-in-JS |
+| shadcn/ui | готовые Radix-компоненты |
+| framer-motion | переходы между секциями и пульсирующие точки |
+| Recharts | live-графики метрик |
+| lucide-react | иконки |

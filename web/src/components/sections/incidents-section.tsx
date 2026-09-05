@@ -12,7 +12,6 @@ import {
 } from "@/lib/format";
 import type { Incident, Severity } from "@/lib/types";
 
-/** Incidents: incident timeline with filters. */
 export function IncidentsSection() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<Severity | "all">("all");
@@ -55,7 +54,7 @@ export function IncidentsSection() {
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-            {/* Severity filter */}
+            {}
             <div className="flex rounded border border-border overflow-hidden text-xs">
               {(["all", "critical", "warning", "info"] as const).map((s) => (
                 <button
@@ -72,7 +71,7 @@ export function IncidentsSection() {
                 </button>
               ))}
             </div>
-            {/* Status filter */}
+            {}
             <div className="flex rounded border border-border overflow-hidden text-xs">
               {(["all", "active", "resolved"] as const).map((s) => (
                 <button
@@ -93,7 +92,7 @@ export function IncidentsSection() {
         </div>
       </div>
 
-      {/* Timeline */}
+      {}
       <div className="rounded-lg border border-border bg-card p-4">
         {loading ? (
           <div className="text-sm text-muted-foreground">Loading...</div>
@@ -104,7 +103,7 @@ export function IncidentsSection() {
           </div>
         ) : (
           <div className="relative">
-            {/* Timeline vertical line */}
+            {}
             <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
             <div className="space-y-4">
@@ -116,7 +115,7 @@ export function IncidentsSection() {
                   transition={{ duration: 0.25, delay: i * 0.04 }}
                   className="relative pl-10"
                 >
-                  {/* Timeline dot */}
+                  {}
                   <div
                     className={`absolute left-2 top-3 w-3.5 h-3.5 rounded-full border-2 border-card ${
                       inc.severity === "critical"
