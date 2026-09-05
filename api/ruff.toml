@@ -1,0 +1,30 @@
+# Ruff configuration for the AtlasOps API.
+# https://docs.astral.sh/ruff/configuration/
+
+target-version = "py312"
+line-length = 100
+extend-exclude = [".venv", "build", "dist"]
+
+[lint]
+# Enable: pycodestyle (E/W), pyflakes (F), isort (I), bugbear (B),
+# pyupgrade (UP), flake8-comprehensions (C4), flake8-simplify (SIM).
+select = ["E", "W", "F", "I", "B", "UP", "C4", "SIM"]
+ignore = [
+    "E501",   # line too long — we trust the formatter
+    "UP017",  # timezone.utc -> UTC alias — keep the more explicit form
+    "UP006",  # typing.List -> list — keep typing imports for clarity
+    "UP007",  # Optional[X] -> X | None — same reason
+    "SIM117", # nested with — sometimes readability wins
+    "B008",   # FastAPI idiomatically uses Query()/Depends() in argument defaults
+]
+
+[lint.per-file-ignores]
+# FastAPI idiomatically uses Query() / Depends() in argument defaults.
+# B008 is the corresponding ruff rule and we silence it for routes.
+"**/routes/*.py" = ["B008"]
+"src/routes/*.py" = ["B008"]
+"**/routes/**/*.py" = ["B008"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
