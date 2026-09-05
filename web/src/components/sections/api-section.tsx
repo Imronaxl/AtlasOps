@@ -7,7 +7,6 @@ import { MOCK_API_ENDPOINTS } from "@/lib/mock-data";
 import { CodeBlock } from "@/components/atlas/code-block";
 import type { ApiEndpoint } from "@/lib/types";
 
-/** API Explorer: interactive documentation of the endpoints. */
 export function ApiSection() {
   const [selected, setSelected] = useState<ApiEndpoint>(MOCK_API_ENDPOINTS[0]);
 
@@ -34,7 +33,7 @@ export function ApiSection() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Endpoint list */}
+        {}
         <div className="rounded-lg border border-border bg-card p-2 max-h-[600px] overflow-y-auto atlas-scroll">
           <div className="space-y-1">
             {MOCK_API_ENDPOINTS.map((ep) => (
@@ -61,7 +60,7 @@ export function ApiSection() {
           </div>
         </div>
 
-        {/* Selected endpoint details */}
+        {}
         <div className="lg:col-span-2 rounded-lg border border-border bg-card p-4">
           <AnimatePresence mode="wait">
             <motion.div

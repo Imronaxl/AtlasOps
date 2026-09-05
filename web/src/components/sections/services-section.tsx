@@ -14,7 +14,6 @@ import {
 import type { ServiceInfo } from "@/lib/types";
 import { StatusDot } from "@/components/atlas/status-dot";
 
-/** Services: table of all services with their statuses. */
 export function ServicesSection() {
   const [services, setServices] = useState<ServiceInfo[]>(MOCK_SERVICES);
   const [loading, setLoading] = useState(true);
@@ -126,7 +125,7 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {/* Detail cards — for interview conversations */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {services.map((s, i) => (
           <motion.div

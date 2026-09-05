@@ -1,10 +1,3 @@
-"""Incident log.
-
-Each record is an event raised by Alertmanager or noticed by an on-call
-engineer. In production these rows would live in the incidents table;
-here we return a deterministic snapshot for portfolio demos.
-"""
-
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -20,10 +13,8 @@ Severity = Literal["critical", "warning", "info"]
 
 
 class Incident(BaseModel):
-    """A single incident: what happened, when, how severe, resolved or not."""
-
     id: int
-    service: str = Field(..., description="Service name the incident belongs to")
+    service: str = Field(..., description="Service name")
     severity: Severity
     title: str
     description: str
@@ -33,9 +24,6 @@ class Incident(BaseModel):
     duration_seconds: int | None = Field(None, description="Duration if resolved")
 
 
-# Reference point — "now". All incidents are generated relative to it
-# so that on a demo the data always looks fresh instead of being dated
-# from a year ago.
 _NOW = datetime.now(timezone.utc)
 
 
@@ -43,9 +31,6 @@ def _ts(minutes_ago: int) -> str:
     return (_NOW - timedelta(minutes=minutes_ago)).isoformat()
 
 
-# Realistic incidents, one per alert type from prometheus/alert.rules.yml.
-# Handy during an interview: open alert rules next to the incident and
-# show how a rule turns into a concrete record.
 _DEFAULT_INCIDENTS: list[Incident] = [
     Incident(
         id=1,
@@ -118,11 +103,6 @@ async def list_incidents(
     resolved: bool | None = Query(None, description="Filter: resolved/active"),
     limit: int = Query(50, ge=1, le=200, description="How many records to return"),
 ):
-    """Return incidents with optional filters.
-
-    Filters are intentionally simple — enough for the UI timeline.
-    Sort order: newest first (by created_at desc).
-    """
     items = _DEFAULT_INCIDENTS
     if severity is not None:
         items = [i for i in items if i.severity == severity]
@@ -135,11 +115,6 @@ async def list_incidents(
 
 @router.get("/incidents/active", response_model=list[Incident])
 async def active_incidents():
-    """Only active (unresolved) incidents.
-
-    Handy for the red badge in the dashboard header: one request and
-    you immediately see if something is burning.
-    """
     items = [i for i in _DEFAULT_INCIDENTS if not i.resolved]
     logger.info("incidents_active", count=len(items))
     return items

@@ -12,7 +12,6 @@ import {
 } from "@/lib/format";
 import type { Architecture, ArchNode, ServiceStatus } from "@/lib/types";
 
-/** Architecture: interactive diagram of all services and connections. */
 export function ArchitectureSection() {
   const [arch, setArch] = useState<Architecture>(MOCK_ARCHITECTURE);
   const [selected, setSelected] = useState<ArchNode | null>(null);
@@ -30,12 +29,12 @@ export function ArchitectureSection() {
     };
   }, []);
 
-  // Node coords: x in 1..11, y in -1..3. Map to percentages of the area.
-  // We do this here (not on the backend) so the backend does not know about CSS.
+  
+  
   const xToPct = (x: number) => ((x - 1) / 10) * 90 + 5;
   const yToPct = (y: number) => ((3 - y) / 4) * 80 + 10;
 
-  // Edges: compute node centers to draw arrows.
+  
   const edgesWithCoords = arch.edges.map((e) => {
     const source = arch.nodes.find((n) => n.id === e.source);
     const target = arch.nodes.find((n) => n.id === e.target);
@@ -85,7 +84,7 @@ export function ArchitectureSection() {
           className="relative arch-grid"
           style={{ height: "540px" }}
         >
-          {/* SVG with arrows — drawn under the nodes */}
+          {}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
             preserveAspectRatio="none"
@@ -160,7 +159,7 @@ export function ArchitectureSection() {
             })}
           </svg>
 
-          {/* Nodes */}
+          {}
           {arch.nodes.map((node, i) => (
             <motion.button
               key={node.id}
@@ -204,7 +203,7 @@ export function ArchitectureSection() {
         </div>
       </div>
 
-      {/* Edge legend */}
+      {}
       <div className="rounded-lg border border-border bg-card p-3 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-6 h-px bg-status-healthy inline-block" />
@@ -223,7 +222,7 @@ export function ArchitectureSection() {
         </div>
       </div>
 
-      {/* Node details modal */}
+      {}
       <AnimatePresence>
         {selected && (
           <motion.div

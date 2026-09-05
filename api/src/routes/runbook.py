@@ -1,11 +1,3 @@
-"""Runbook: operational procedures.
-
-Each procedure is a step-by-step guide for an on-call engineer: what
-to do in a specific situation (deploy, backup, restore, troubleshooting).
-The frontend renders these as cards with steps and commands so during
-an interview you can click and discuss.
-"""
-
 import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -15,17 +7,13 @@ logger = structlog.get_logger()
 
 
 class RunbookStep(BaseModel):
-    """A single step of a procedure."""
-
     title: str
     description: str
     command: str | None = Field(None, description="Shell command if any")
-    expected: str = Field("", description="What should happen after the step")
+    expected: str = Field("", description="Expected result after the step")
 
 
 class Runbook(BaseModel):
-    """A full procedure."""
-
     id: str
     title: str
     summary: str
@@ -193,14 +181,12 @@ _RUNBOOKS: list[Runbook] = [
 
 @router.get("/runbook", response_model=list[Runbook])
 async def list_runbooks():
-    """All runbook procedures."""
     logger.info("runbook_list", count=len(_RUNBOOKS))
     return _RUNBOOKS
 
 
 @router.get("/runbook/{rid}", response_model=Runbook)
 async def get_runbook(rid: str):
-    """A single procedure by id. 404 if not found."""
     for r in _RUNBOOKS:
         if r.id == rid:
             return r

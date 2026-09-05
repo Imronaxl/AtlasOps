@@ -46,8 +46,6 @@ app = FastAPI(
     redoc_url=None,
 )
 
-# CORS: frontend lives on a different port (3000), so without this
-# the browser will block the requests. In prod, narrow origins to the real domain.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

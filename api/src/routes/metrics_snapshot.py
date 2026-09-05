@@ -1,14 +1,3 @@
-"""Metrics snapshot for the dashboard.
-
-Prometheus exposes raw metrics in text format — parsing them on the
-frontend is awkward. So here we return an already-digested snapshot:
-numbers ready to be drawn with Recharts.
-
-In production the data would come from prometheus_client or an HTTP
-call to the Prometheus API. For the demo we synthesize it, but with
-realistic dynamics (sin wave + noise) so the charts look alive.
-"""
-
 import math
 import random
 import time
@@ -26,34 +15,26 @@ MetricKind = Literal["cpu", "memory", "requests", "latency", "errors"]
 
 
 class MetricPoint(BaseModel):
-    """A single point of a time series."""
-
     t: int = Field(..., description="Unix seconds")
     value: float
 
 
 class MetricSeries(BaseModel):
-    """A single metric series: name + points."""
-
     name: str
     unit: str
     points: list[MetricPoint]
 
 
 class MetricsSnapshot(BaseModel):
-    """Snapshot of all metrics needed by the dashboard."""
-
     generated_at: int
     series: list[MetricSeries]
-    # Current KPI values for the top dashboard cards.
     current: dict[str, float]
 
 
 def _wave(base: float, amplitude: float, period: int, now: int, count: int) -> list[MetricPoint]:
-    """Sin wave with light noise — a realistic-looking live metric."""
     points = []
     for i in range(count):
-        t = now - (count - 1 - i) * 60  # one minute between points
+        t = now - (count - 1 - i) * 60
         wave = math.sin(2 * math.pi * (now - t) / period) * amplitude
         noise = random.uniform(-amplitude * 0.1, amplitude * 0.1)
         value = max(0.0, base + wave + noise)
@@ -63,11 +44,6 @@ def _wave(base: float, amplitude: float, period: int, now: int, count: int) -> l
 
 @router.get("/metrics/snapshot", response_model=MetricsSnapshot)
 async def metrics_snapshot():
-    """Return a metrics snapshot for the last hour (60 points, 60s step).
-
-    The structure is the same for every series so the frontend can render
-    them all with a single component, without separate hooks per chart.
-    """
     now = int(time.time())
     count = 60
 

@@ -42,7 +42,6 @@ import type {
   MetricsSnapshot,
 } from "@/lib/types";
 
-/** Dashboard: overview screen with KPIs, live charts and active incidents. */
 export function DashboardSection() {
   const [services, setServices] = useState<ServiceInfo[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -64,7 +63,7 @@ export function DashboardSection() {
       setLoading(false);
     }
     load();
-    // Refresh metrics every 30s — the chart comes alive.
+    
     const interval = setInterval(async () => {
       const m = await fetchMetricsSnapshot();
       if (!cancelled) setMetrics(m);
@@ -96,7 +95,7 @@ export function DashboardSection() {
 
   return (
     <div className="space-y-6">
-      {/* Hero: one-line system status */}
+      {}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -134,7 +133,7 @@ export function DashboardSection() {
         </div>
       </motion.div>
 
-      {/* KPI cards */}
+      {}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard
           label="Services up"
@@ -169,7 +168,7 @@ export function DashboardSection() {
         />
       </div>
 
-      {/* Charts */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard
           title="CPU & Memory"
@@ -244,7 +243,7 @@ export function DashboardSection() {
         </ChartCard>
       </div>
 
-      {/* Compact service list */}
+      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -275,7 +274,7 @@ export function DashboardSection() {
         </div>
       </div>
 
-      {/* Active incidents */}
+      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -334,7 +333,6 @@ export function DashboardSection() {
   );
 }
 
-/** Card wrapper for a chart with a title. */
 function ChartCard({
   title,
   subtitle,
