@@ -3,12 +3,18 @@ import time
 
 import structlog
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from prometheus_client import generate_latest
 
 from src.config import get_settings
-from src.metrics import REQUEST_COUNT, REQUEST_LATENCY, INACTIVE_CONNECTIONS
+from src.metrics import INACTIVE_CONNECTIONS, REQUEST_COUNT, REQUEST_LATENCY
+from src.routes.architecture import router as architecture_router
 from src.routes.health import router as health_router
+from src.routes.incidents import router as incidents_router
+from src.routes.metrics_snapshot import router as metrics_snapshot_router
+from src.routes.runbook import router as runbook_router
+from src.routes.services import router as services_router
 from src.routes.status import router as status_router
 
 
@@ -40,8 +46,22 @@ app = FastAPI(
     redoc_url=None,
 )
 
+# CORS: frontend lives on a different port (3000), so without this
+# the browser will block the requests. In prod, narrow origins to the real domain.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
 app.include_router(health_router)
 app.include_router(status_router)
+app.include_router(services_router)
+app.include_router(incidents_router)
+app.include_router(architecture_router)
+app.include_router(metrics_snapshot_router)
+app.include_router(runbook_router)
 
 
 @app.middleware("http")

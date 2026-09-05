@@ -1,46 +1,116 @@
-# Environment
+# === AtlasOps .gitignore ===
+
+# --- Secrets / env ---
 .env
 .env.local
-.env.production
+.env.*.local
+*.env
+!*.env.example
 
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-venv/
-.venv/
-*.egg-info/
-dist/
 build/
-.pytest_cache/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Docker
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ruff / mypy
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# --- Node / Next.js (web/) ---
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+web/.vercel/
+web/*.tsbuildinfo
+web/next-env.d.ts
+web/.env*.local
+
+# npm / yarn / pnpm
+web/.npm
+web/.yarn/cache
+web/.pnpm-store/
+
+# --- Docker ---
+*.pid
 docker-compose.override.yml
 
-# IDE
-.vscode/
+# --- Backups ---
+backups/
+*.sql.gz
+*.sql
+*.tar.gz
+*.tar
+
+# --- Logs ---
+logs/
+*.log
+nginx/logs/
+
+# --- OS / IDE ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
+.project
+.settings/
+.classpath
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Backups
-*.sql.gz
-backups/
-
-# Prometheus data
-prometheus-data/
+# --- Data volumes (local dev) ---
+postgres-data/
+redis-data/
 grafana-data/
+prometheus-data/
 
-# Node
-node_modules/
+# --- Misc ---
+*.bak
+*.tmp
+*.orig
+.cache/
