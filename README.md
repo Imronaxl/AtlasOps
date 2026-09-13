@@ -45,7 +45,7 @@
 
 ## Скриншоты
 
-> Все скриншоты лежат в [`docs/screenshots/`](./docs/screenshots). Ниже они подключены относительными путями, поэтому напрямую рендерятся на GitHub.
+> Все скриншоты лежат в [`docs/screenshots/`](./docs/screenshots). 
 
 ### 1. Dashboard
 
