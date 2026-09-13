@@ -1,6 +1,6 @@
 # AtlasOps — Платформа мониторинга инфраструктуры
 
-> Production-grade DevOps-стек мониторинга: FastAPI + PostgreSQL + Redis + Nginx + Prometheus + Grafana + Alertmanager — с интерактивным Next.js-дашбордом сверху. Сделано как портфолио-проект уровня junior DevOps.
+> Production-grade DevOps-стек мониторинга: FastAPI + PostgreSQL + Redis + Nginx + Prometheus + Grafana + Alertmanager — с интерактивным Next.js-дашбордом сверху.
 
 ![status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
