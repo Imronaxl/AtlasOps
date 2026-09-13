@@ -441,16 +441,6 @@ CORS открыт для разработки. В проде сузить `allow
 
 ---
 
-## Roadmap
-
-- [ ] WebSocket push для live-метрик (вместо поллинга каждые 30s)
-- [ ] NextAuth.js-аутентификация для дашборда
-- [ ] Страницы детализации по каждому сервису с историческими графиками
-- [ ] PDF-экспорт процедур runbook
-- [ ] Terraform / Ansible provisioning для облачного деплоя
-- [ ] Multi-node Prometheus federation через Thanos
-
----
 
 ## Лицензия
 
