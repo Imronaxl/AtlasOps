@@ -30,7 +30,7 @@
 
 ## Обзор
 
-**AtlasOps** — self-hosted платформа мониторинга инфраструктуры, которая собирает в одном месте всё, что нужно junior DevOps-инженеру для демонстрации end-to-end навыков:
+**AtlasOps** — self-hosted платформа мониторинга инфраструктуры, которая собирает в одном месте всё.
 
 - **FastAPI**-сервис с эндпоинтами `/health`, `/status`, `/metrics` и набором JSON-эндпоинтов для дашборда.
 - **Docker Compose**-стек с PostgreSQL, Redis, Nginx, Prometheus, Grafana, Alertmanager, node_exporter и cAdvisor — у каждого сервиса есть healthcheck.
