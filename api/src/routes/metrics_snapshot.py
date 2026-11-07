@@ -1,21 +1,41 @@
-import math
-import random
+"""Last hour of key metrics for the dashboard, read from Prometheus."""
+
+import asyncio
 import time
-from typing import Literal
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from src.metrics import UPSTREAM_ERRORS
+from src.prometheus import PrometheusError
+
 router = APIRouter(prefix="/api", tags=["metrics"])
-logger = structlog.get_logger()
+log = structlog.get_logger(__name__)
 
+WINDOW = 3600
+STEP = 60
 
-MetricKind = Literal["cpu", "memory", "requests", "latency", "errors"]
+# name -> (unit, PromQL)
+SERIES: dict[str, tuple[str, str]] = {
+    "cpu": ("%", '100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[2m])))'),
+    "memory": ("%", "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)"),
+    "requests": ("rps", 'sum(rate(http_requests_total{job="api"}[2m]))'),
+    "latency": (
+        "ms",
+        "1000 * histogram_quantile(0.95, sum by (le) ("
+        'rate(http_request_duration_seconds_bucket{job="api"}[2m])))',
+    ),
+    "errors": (
+        "%",
+        '100 * sum(rate(http_requests_total{job="api",status=~"5.."}[2m]))'
+        ' / clamp_min(sum(rate(http_requests_total{job="api"}[2m])), 1e-9)',
+    ),
+}
 
 
 class MetricPoint(BaseModel):
-    t: int = Field(..., description="Unix seconds")
+    t: int = Field(description="Unix seconds")
     value: float
 
 
@@ -31,45 +51,30 @@ class MetricsSnapshot(BaseModel):
     current: dict[str, float]
 
 
-def _wave(base: float, amplitude: float, period: int, now: int, count: int) -> list[MetricPoint]:
-    points = []
-    for i in range(count):
-        t = now - (count - 1 - i) * 60
-        wave = math.sin(2 * math.pi * (now - t) / period) * amplitude
-        noise = random.uniform(-amplitude * 0.1, amplitude * 0.1)
-        value = max(0.0, base + wave + noise)
-        points.append(MetricPoint(t=t, value=round(value, 2)))
-    return points
-
-
 @router.get("/metrics/snapshot", response_model=MetricsSnapshot)
-async def metrics_snapshot():
-    now = int(time.time())
-    count = 60
+async def metrics_snapshot(request: Request) -> MetricsSnapshot:
+    prom = request.app.state.prometheus
+    # Align to the step so the Redis cache key is stable within a minute.
+    end = int(time.time()) // STEP * STEP
+    try:
+        results = await asyncio.gather(
+            *(prom.query_range(expr, end - WINDOW, end, STEP) for _, expr in SERIES.values())
+        )
+        uptime = await prom.query('time() - process_start_time_seconds{job="api"}')
+    except PrometheusError as exc:
+        UPSTREAM_ERRORS.labels("prometheus").inc()
+        raise HTTPException(503, "Prometheus is unavailable") from exc
 
-    cpu = _wave(base=42.0, amplitude=15.0, period=1800, now=now, count=count)
-    memory = _wave(base=58.0, amplitude=10.0, period=2400, now=now, count=count)
-    requests = _wave(base=120.0, amplitude=40.0, period=900, now=now, count=count)
-    latency = _wave(base=85.0, amplitude=25.0, period=1200, now=now, count=count)
-    errors = _wave(base=0.6, amplitude=0.4, period=1500, now=now, count=count)
+    series, current = [], {}
+    for (name, (unit, _)), result in zip(SERIES.items(), results, strict=True):
+        values = result[0]["values"] if result else []
+        points = [
+            MetricPoint(t=int(t), value=round(float(v), 2))
+            for t, v in values
+            if v not in ("NaN", "+Inf", "-Inf")
+        ]
+        series.append(MetricSeries(name=name, unit=unit, points=points))
+        current[name] = points[-1].value if points else 0.0
+    current["uptime_seconds"] = round(float(uptime[0]["value"][1]), 1) if uptime else 0.0
 
-    snapshot = MetricsSnapshot(
-        generated_at=now,
-        series=[
-            MetricSeries(name="cpu", unit="%", points=cpu),
-            MetricSeries(name="memory", unit="%", points=memory),
-            MetricSeries(name="requests", unit="rps", points=requests),
-            MetricSeries(name="latency", unit="ms", points=latency),
-            MetricSeries(name="errors", unit="%", points=errors),
-        ],
-        current={
-            "cpu": cpu[-1].value,
-            "memory": memory[-1].value,
-            "requests": requests[-1].value,
-            "latency": latency[-1].value,
-            "errors": errors[-1].value,
-            "uptime_seconds": 3624.5,
-        },
-    )
-    logger.info("metrics_snapshot_served", series=len(snapshot.series))
-    return snapshot
+    return MetricsSnapshot(generated_at=end, series=series, current=current)

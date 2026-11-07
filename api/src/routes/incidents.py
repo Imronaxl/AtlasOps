@@ -1,120 +1,95 @@
-from datetime import datetime, timedelta, timezone
-from typing import Literal
+"""Incidents: alerts from Alertmanager, stored in PostgreSQL."""
+
+import hmac
+from datetime import datetime
+from typing import Any, Literal
 
 import structlog
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/api", tags=["incidents"])
-logger = structlog.get_logger()
+from src.metrics import ALERTS_RECEIVED
 
+router = APIRouter(prefix="/api", tags=["incidents"])
+log = structlog.get_logger(__name__)
 
 Severity = Literal["critical", "warning", "info"]
 
 
 class Incident(BaseModel):
     id: int
-    service: str = Field(..., description="Service name")
-    severity: Severity
+    service: str
+    severity: str
     title: str
     description: str
-    created_at: str = Field(..., description="ISO-8601 UTC")
-    resolved_at: str | None = Field(None, description="ISO-8601 UTC or null if still active")
+    created_at: datetime
+    resolved_at: datetime | None
     resolved: bool
-    duration_seconds: int | None = Field(None, description="Duration if resolved")
+    duration_seconds: int | None = Field(description="Set once the alert has resolved")
 
 
-_NOW = datetime.now(timezone.utc)
+class AlertmanagerAlert(BaseModel):
+    status: Literal["firing", "resolved"]
+    labels: dict[str, str]
+    annotations: dict[str, str] = {}
+    startsAt: str  # noqa: N815 - Alertmanager field names
+    endsAt: str = ""  # noqa: N815
+    fingerprint: str
 
 
-def _ts(minutes_ago: int) -> str:
-    return (_NOW - timedelta(minutes=minutes_ago)).isoformat()
+class AlertmanagerWebhook(BaseModel):
+    """The payload Alertmanager posts to webhook receivers (version 4)."""
+
+    version: str
+    status: str
+    alerts: list[AlertmanagerAlert]
 
 
-_DEFAULT_INCIDENTS: list[Incident] = [
-    Incident(
-        id=1,
-        service="api",
-        severity="critical",
-        title="HighErrorRate: 5xx > 5% for 5m",
-        description=(
-            "Share of 5xx responses on /metrics grew to 7.4%. Root cause: a "
-            "race condition when reconnecting to postgres after a restart. "
-            "Fix: pgbouncer in the queue."
-        ),
-        created_at=_ts(180),
-        resolved_at=_ts(165),
-        resolved=True,
-        duration_seconds=900,
-    ),
-    Incident(
-        id=2,
-        service="node-exporter",
-        severity="warning",
-        title="HighCPUUsage: CPU > 80% for 5m",
-        description="cadvisor scrape consumed 86% CPU with a large number of containers.",
-        created_at=_ts(120),
-        resolved_at=_ts(95),
-        resolved=True,
-        duration_seconds=1500,
-    ),
-    Incident(
-        id=3,
-        service="postgres",
-        severity="warning",
-        title="HighDiskUsage: Disk > 85% for 5m",
-        description=(
-            "/var/lib/postgresql/data at 87%. Fix: VACUUM FULL + rotation "
-            "of old log partitions via scripts/rotate_logs.sh."
-        ),
-        created_at=_ts(60),
-        resolved_at=None,
-        resolved=False,
-        duration_seconds=None,
-    ),
-    Incident(
-        id=4,
-        service="alertmanager",
-        severity="warning",
-        title="AlertmanagerSendFailed",
-        description="Failed to send a notification to webhook. Retry every 30s.",
-        created_at=_ts(25),
-        resolved_at=None,
-        resolved=False,
-        duration_seconds=None,
-    ),
-    Incident(
-        id=5,
-        service="api",
-        severity="info",
-        title="Deploy completed: v1.4.2",
-        description="Zero-downtime deploy via scripts/deploy.sh. Roll-forward successful.",
-        created_at=_ts(10),
-        resolved_at=_ts(9),
-        resolved=True,
-        duration_seconds=60,
-    ),
-]
+def _to_incident(row: Any) -> Incident:
+    ends = row["ends_at"]
+    return Incident(
+        id=row["id"],
+        service=row["service"],
+        severity=row["severity"],
+        title=row["summary"] or row["alertname"],
+        description=row["description"],
+        created_at=row["starts_at"],
+        resolved_at=ends,
+        resolved=ends is not None,
+        duration_seconds=int((ends - row["starts_at"]).total_seconds()) if ends else None,
+    )
 
 
 @router.get("/incidents", response_model=list[Incident])
 async def list_incidents(
-    severity: Severity | None = Query(None, description="Filter by severity"),
-    resolved: bool | None = Query(None, description="Filter: resolved/active"),
-    limit: int = Query(50, ge=1, le=200, description="How many records to return"),
-):
-    items = _DEFAULT_INCIDENTS
-    if severity is not None:
-        items = [i for i in items if i.severity == severity]
-    if resolved is not None:
-        items = [i for i in items if i.resolved == resolved]
-    items = sorted(items, key=lambda i: i.created_at, reverse=True)[:limit]
-    logger.info("incidents_list", severity=severity, resolved=resolved, returned=len(items))
-    return items
+    request: Request,
+    severity: Severity | None = Query(None),
+    resolved: bool | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+) -> list[Incident]:
+    rows = await request.app.state.incidents.list(severity, resolved, limit)
+    return [_to_incident(r) for r in rows]
 
 
 @router.get("/incidents/active", response_model=list[Incident])
-async def active_incidents():
-    items = [i for i in _DEFAULT_INCIDENTS if not i.resolved]
-    logger.info("incidents_active", count=len(items))
-    return items
+async def active_incidents(request: Request) -> list[Incident]:
+    rows = await request.app.state.incidents.list(None, False, 200)
+    return [_to_incident(r) for r in rows]
+
+
+@router.post("/alerts", status_code=202, include_in_schema=False)
+async def alertmanager_webhook(
+    payload: AlertmanagerWebhook,
+    request: Request,
+    authorization: str = Header(""),
+) -> dict[str, int]:
+    """Receiver for Alertmanager (see monitoring/alertmanager/config.yml)."""
+    token = request.app.state.settings.alert_webhook_token
+    if token and not hmac.compare_digest(authorization, f"Bearer {token}"):
+        raise HTTPException(401, "invalid webhook token")
+
+    stored = await request.app.state.incidents.upsert([a.model_dump() for a in payload.alerts])
+    for a in payload.alerts:
+        ALERTS_RECEIVED.labels(a.status).inc()
+    log.info("alerts_received", count=stored, group_status=payload.status)
+    return {"stored": stored}

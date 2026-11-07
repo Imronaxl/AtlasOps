@@ -1,29 +1,29 @@
-import os
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "infra-monitor-api"
-    app_version: str = "1.0.0"
-    environment: str = os.getenv("API_ENV", "production")
-    log_level: str = os.getenv("API_LOG_LEVEL", "info")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://infra_admin:changeme_postgres_secret@postgres:5432/infra_monitor",
-    )
-    redis_url: str = os.getenv(
-        "REDIS_URL",
-        "redis://:changeme_redis_secret@redis:6379/0",
-    )
+    app_name: str = "atlasops-api"
+    app_version: str = "1.1.0"
+    api_env: str = "production"
 
-    api_host: str = os.getenv("API_HOST", "0.0.0.0")
-    api_port: int = int(os.getenv("API_PORT", "8000"))
-    api_workers: int = int(os.getenv("API_WORKERS", "2"))
+    database_url: str = "postgresql://infra_admin:changeme@postgres:5432/infra_monitor"
+    redis_url: str = "redis://redis:6379/0"
+    prometheus_url: str = "http://prometheus:9090"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    # Seconds to cache Prometheus answers in Redis; the dashboard polls them.
+    query_cache_ttl: int = 10
+    # Optional bearer token Alertmanager must send to the webhook.
+    alert_webhook_token: str = ""
+    cors_origins: list[str] = []
+
+    @property
+    def postgres_dsn(self) -> str:
+        # asyncpg wants a plain postgresql:// URL.
+        return self.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 
 
 @lru_cache

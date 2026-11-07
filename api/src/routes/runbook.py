@@ -24,8 +24,11 @@ class Runbook(BaseModel):
 _RUNBOOKS: list[Runbook] = [
     Runbook(
         id="deploy",
-        title="Zero-downtime deploy",
-        summary="Update the API without downtime: bring up new replicas, switch nginx, drain old ones.",
+        title="Deploy",
+        summary=(
+            "Rebuild images and recreate changed containers. "
+            "The API restarts, so expect a few seconds of 502s from nginx."
+        ),
         severity="info",
         steps=[
             RunbookStep(
@@ -49,7 +52,7 @@ _RUNBOOKS: list[Runbook] = [
             RunbookStep(
                 title="4. Watch metrics after deploy",
                 description="Look at error rate and latency for 5-10 minutes.",
-                command="curl http://localhost:9090/api/v1/query?query=rate(http_requests_total%5B5m%5D)",
+                command="curl -s localhost:8000/api/incidents/active",
                 expected="No 5xx spike, latency within normal range.",
             ),
         ],
@@ -101,7 +104,7 @@ _RUNBOOKS: list[Runbook] = [
             RunbookStep(
                 title="3. Apply the backup",
                 description="The script restores the selected backup.",
-                command="BACKUP_FILE=backups/infra_monitor_20250101_120000.sql.gz make restore",
+                command="make restore FILE=backups/backup_20260101_120000.sql.gz",
                 expected="services/incidents tables filled with data from the backup.",
             ),
             RunbookStep(
