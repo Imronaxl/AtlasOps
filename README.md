@@ -1,438 +1,160 @@
-# AtlasOps — Платформа мониторинга инфраструктуры
+# AtlasOps
 
-> Production-grade DevOps-стек мониторинга: FastAPI + PostgreSQL + Redis + Nginx + Prometheus + Grafana + Alertmanager — с интерактивным Next.js-дашбордом сверху.
+[![CI](https://github.com/Imronaxl/atlasops/actions/workflows/ci.yml/badge.svg)](https://github.com/Imronaxl/atlasops/actions/workflows/ci.yml)
 
-![status](https://img.shields.io/badge/status-active-success?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-![python](https://img.shields.io/badge/python-3.12-blue?style=flat-square)
-![fastapi](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square)
-![nextjs](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
-![docker](https://img.shields.io/badge/docker-compose-2496ED?style=flat-square)
+A self-hosted monitoring stack for a Docker host, built with Docker Compose:
+Prometheus with node-exporter, cAdvisor and service exporters, alert rules
+with unit tests, Alertmanager, provisioned Grafana dashboards, and a small
+FastAPI service that turns all of it into one API: live service health,
+metric snapshots, and an incident history fed by Alertmanager.
 
----
+![Dashboard](docs/screenshots/dashboard.png)
 
-## Содержание
-
-- [Обзор](#обзор)
-- [Скриншоты](#скриншоты)
-- [Архитектура](#архитектура)
-- [Стек](#стек)
-- [Структура репозитория](#структура-репозитория)
-- [Быстрый старт](#быстрый-старт)
-- [Фронтенд-дашборд](#фронтенд-дашборд)
-- [Бэкенд API](#бэкенд-api)
-- [Мониторинг](#мониторинг)
-- [Скрипты](#скрипты)
-- [CI/CD](#cicd)
-- [Лицензия](#лицензия)
-
----
-
-## Обзор
-
-**AtlasOps** — self-hosted платформа мониторинга инфраструктуры, которая собирает в одном месте всё.
-
-- **FastAPI**-сервис с эндпоинтами `/health`, `/status`, `/metrics` и набором JSON-эндпоинтов для дашборда.
-- **Docker Compose**-стек с PostgreSQL, Redis, Nginx, Prometheus, Grafana, Alertmanager, node_exporter и cAdvisor — у каждого сервиса есть healthcheck.
-- **Next.js 16 дашборд** с семью интерактивными секциями (живые KPI, диаграмма архитектуры, таблица сервисов, таймлайн инцидентов, runbook, API-проводник, анимированное CLI-демо).
-- **CI-пайплайн**, который линтит Python, TypeScript, YAML, shell и Markdown на каждом пуше.
-
-Дашборд работает в двух режимах:
-- **`live`** — когда FastAPI-бэкенд доступен, UI берёт реальные данные.
-- **`demo`** — когда бэкенд недоступен, UI прозрачно падает на мок-данные, так что проект можно показать где угодно без поднятия Docker.
-
----
-
-## Скриншоты
-
-> Все скриншоты лежат в [`docs/screenshots/`](./docs/screenshots). 
-
-### 1. Dashboard
-
-KPI-карточки, живые графики CPU/Memory/Request-rate (Recharts), компактный список сервисов и активные инциденты. Автообновление каждые 30 секунд.
-
-![Dashboard](docs/screenshots/01-dashboard.png)
-
-### 2. Architecture
-
-Интерактивная топология сервисов. Клик по любому блоку открывает его детали и связи. Три типа стрелок: `http` (зелёная сплошная), `scrape` (жёлтая пунктирная), `depend` (серая точечная).
-
-![Architecture](docs/screenshots/02-architecture.png)
-
-Клик по ноде открывает модалку с портом, типом и списком связей:
-
-![Architecture modal](docs/screenshots/02b-architecture-modal.png)
-
-### 3. Services
-
-Полный реестр: табличный вид сверху, детальные карточки снизу. Каждая карточка показывает порт, аптайм, зависимости и живой статус health-check.
-
-![Services](docs/screenshots/03-services.png)
-
-### 4. Incidents
-
-Таймлайн с фильтрами по severity (`critical` / `warning` / `info`) и по состоянию (`all` / `active` / `resolved`). У каждого инцидента — время старта, резолва и длительность.
-
-![Incidents](docs/screenshots/04-incidents.png)
-
-### 5. Runbook
-
-Операционные процедуры в виде раскрывающихся карточек: деплой, бэкап, восстановление, траблшутинг высокого CPU, восстановление при переполнении диска. У каждого шага есть описание, команда (с кнопкой копирования) и ожидаемый результат.
-
-![Runbook](docs/screenshots/05-runbook.png)
-
-### 6. API Explorer
-
-Интерактивная документация по каждому эндпоинту FastAPI: метод, путь, описание, пример `curl` и пример JSON-ответа. Кликаешь эндпоинт слева — видишь его детали справа.
-
-![API Explorer](docs/screenshots/06-api.png)
-
-### 7. CLI demo
-
-Анимированный терминал, который «печатает» типичные `make`-команды (`make up`, `make deploy`, `make backup`, `make healthcheck`) и построчно показывает вывод. Управление: Play / Pause / Restart.
-
-![CLI demo](docs/screenshots/07-cli.png)
-
----
-
-## Архитектура
+## What runs
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Load Balancer                            │
-│                           (nginx)                               │
-│                            :80                                   │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-         ┌─────────┐ ┌─────────┐ ┌─────────┐
-         │ /health │ │ /status │ │ /metrics│
-         └────┬────┘ └────┬────┘ └────┬────┘
-              │            │            │
-              └────────────┼────────────┘
-                           │
-                      ┌────┴────┐
-                      │   API   │
-                      │(FastAPI)│
-                      │  :8000  │
-                      └────┬────┘
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-         ┌─────────┐ ┌─────────┐ ┌─────────┐
-         │PostgreSQL│ │  Redis  │ │Prometheus│
-         │  :5432   │ │  :6379  │ │  :9090   │
-         └─────────┘ └─────────┘ └─────┬────┘
-                                       │
-                              ┌────────┼────────┐
-                              │        │        │
-                              ▼        ▼        ▼
-                        ┌─────────┐ ┌───────┐ ┌──────────┐
-                        │ Grafana │ │Alert  │ │Node      │
-                        │  :3000  │ │Manager│ │Exporter  │
-                        └─────────┘ │ :9093 │ │  :9100   │
-                                    └───────┘ └──────────┘
+                          ┌──────────── Prometheus ◄──────────── Grafana
+           scrape         │  alert rules  │
+  ┌──────────┬────────────┼───────────────┼────────────┐
+  ▼          ▼            ▼               ▼            ▼
+node-     cAdvisor   postgres-       redis-       nginx-        API /metrics
+exporter             exporter        exporter     exporter
+                         │               │            │
+                     PostgreSQL        Redis        nginx ──► API
+                         ▲               ▲                     │  ▲
+                         └── incidents ──┴── query cache ──────┘  │
+                                                                  │ webhook
+                                                    Alertmanager ─┘
 ```
 
-Дашборд (Next.js, порт 3000) стоит рядом со стеком и ходит в FastAPI-эндпоинты `/api/*`.
+| Service | Purpose |
+|---|---|
+| nginx | Reverse proxy for the API: rate limiting, security headers, JSON access logs, `stub_status` |
+| api | FastAPI service: `/api/services`, `/api/metrics/snapshot`, `/api/incidents`, Alertmanager webhook |
+| postgres | Stores incidents (Alertmanager alerts, firing and resolved) |
+| redis | Caches Prometheus answers for the API for 10 s |
+| prometheus | Scrapes everything every 15 s, evaluates 16 alert rules |
+| alertmanager | Groups alerts and posts them to the API webhook with a bearer token |
+| grafana | Datasource and dashboard provisioned from `monitoring/grafana` |
+| node-exporter, cadvisor | Host and per-container metrics |
+| postgres-, redis-, nginx-exporter | Whether each service actually works (`pg_up`, `redis_up`, `nginx_up`) |
 
----
+All images are pinned, and every published port is bound to `127.0.0.1`;
+put a TLS proxy or a firewall rule in front of nginx for remote access.
 
-## Стек
+## How the API gets its data
 
-| Слой | Технология | Назначение |
-|------|-----------|------------|
-| Reverse proxy | Nginx 1.27 | Балансировка, security-заголовки, rate limiting |
-| API-сервис | Python 3.12 + FastAPI | Health, status, metrics + JSON-эндпоинты для дашборда |
-| База данных | PostgreSQL 16 | Постоянное хранилище |
-| Кэш | Redis 7 | Сессионный кэш, rate limiting |
-| Метрики | Prometheus | Time-series хранилище метрик |
-| Дашборды | Grafana | Визуализация и алертинг |
-| Алертинг | Alertmanager | Роутинг и нотификации |
-| Системные метрики | node_exporter | Метрики хоста |
-| Контейнерные метрики | cAdvisor | Per-container мониторинг ресурсов |
-| Фронтенд | Next.js 16 + TypeScript + Tailwind + shadcn/ui | Интерактивный дашборд |
+- **Service health** is a PromQL query per service, chosen to answer "does it
+  work" rather than "is its exporter up": `pg_up` for PostgreSQL, `redis_up`
+  for Redis, `up{job="api"}` for the API. Uptime is
+  `time() - container_start_time_seconds` from cAdvisor. A service with no
+  data is reported as `unknown`, not as healthy.
+- **Metric snapshots** are `query_range` calls for the last hour (CPU, memory,
+  request rate, p95 latency, error rate). Responses are cached in Redis, and a
+  Redis outage only disables the cache.
+- **Incidents** come from Alertmanager's webhook. Each alert is upserted by
+  `(fingerprint, startsAt)`, so repeated notifications update one row and the
+  resolved notification closes it with an end time.
+- `/ready` checks PostgreSQL, Redis and Prometheus and returns 503 if any of
+  them fails; `/health` is a plain liveness probe.
 
----
+Request metrics are labelled by route template (`/api/services/{name}`), not
+by raw path, so a scanner hitting random URLs cannot blow up label
+cardinality.
 
-## Структура репозитория
+## Alerts
 
-```
-atlasops/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                   # CI: lint Python, TS, YAML, shell, Markdown
-├── .gitignore
-├── .env.example                     # скопировать в .env и подправить
-├── docker-compose.yml               # весь стек в одном файле
-├── Makefile                         # make up / down / build / backup / deploy / ...
-├── README.md                        # этот файл
-│
-├── api/                             # FastAPI-бэкенд
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── ruff.toml                    # настройки линтера ruff
-│   ├── src/
-│   │   ├── main.py                  # точка входа, middleware, регистрация роутов
-│   │   ├── config.py                # pydantic-settings
-│   │   ├── metrics.py               # Prometheus-счётчики / гистограммы
-│   │   └── routes/
-│   │       ├── health.py            # /health, /ready
-│   │       ├── status.py            # /status
-│   │       ├── services.py          # /api/services
-│   │       ├── incidents.py         # /api/incidents
-│   │       ├── architecture.py      # /api/architecture
-│   │       ├── metrics_snapshot.py  # /api/metrics/snapshot
-│   │       └── runbook.py           # /api/runbook
-│   └── tests/
-│       ├── test_health.py
-│       ├── test_dashboard_api.py
-│       └── conftest.py
-│
-├── web/                             # Next.js-дашборд
-│   ├── package.json
-│   ├── next.config.ts
-│   ├── tsconfig.json
-│   ├── tailwind.config.ts
-│   ├── eslint.config.mjs
-│   ├── postcss.config.mjs
-│   ├── components.json              # shadcn/ui конфиг
-│   ├── public/
-│   ├── README.md                    # документация фронтенда
-│   └── src/
-│       ├── app/
-│       │   ├── layout.tsx           # корневой layout, тёмная тема, шрифты
-│       │   ├── page.tsx             # главная страница: sidebar + роутер секций
-│       │   └── globals.css          # Tailwind + кастомные стили
-│       ├── components/
-│       │   ├── atlas/               # переиспользуемые атомы
-│       │   │   ├── status-dot.tsx
-│       │   │   ├── status-badge.tsx
-│       │   │   ├── code-block.tsx
-│       │   │   └── kpi-card.tsx
-│       │   └── sections/            # семь секций UI
-│       │       ├── dashboard-section.tsx
-│       │       ├── architecture-section.tsx
-│       │       ├── services-section.tsx
-│       │       ├── incidents-section.tsx
-│       │       ├── runbook-section.tsx
-│       │       ├── api-section.tsx
-│       │       └── cli-section.tsx
-│       └── lib/
-│           ├── types.ts             # общий контракт с бэкендом
-│           ├── api.ts               # fetcher с fallback на моки
-│           ├── mock-data.ts         # данные для demo-режима
-│           └── format.ts            # форматтеры (uptime, relative time, ...)
-│
-├── nginx/
-│   ├── Dockerfile
-│   └── nginx.conf                   # rate-limit, security headers, JSON-логи
-│
-├── postgres/
-│   └── init.sql                     # схема: services, incidents + триггеры
-│
-├── redis/
-│   └── redis.conf                   # AOF, maxmemory 256mb, LRU
-│
-├── monitoring/
-│   ├── prometheus/
-│   │   ├── prometheus.yml
-│   │   └── alert.rules.yml
-│   ├── alertmanager/
-│   │   └── config.yml
-│   └── grafana/
-│       ├── dashboards/
-│       │   └── infrastructure.json
-│       └── provisioning/
-│           ├── dashboards/provider.yml
-│           └── datasources/datasource.yml
-│
-├── scripts/
-│   ├── deploy.sh                    # zero-downtime деплой
-│   ├── backup.sh                    # pg_dump + gzip
-│   ├── restore.sh                   # восстановление с safety-бэкапом
-│   ├── healthcheck.sh               # полная проверка здоровья
-│   ├── rotate_logs.sh               # ротация логов
-│   └── cleanup.sh                   # docker prune
-│
-├── systemd/
-│   └── infra-monitor.service        # опциональный systemd-unit
-│
-└── docs/
-    ├── architecture.md
-    ├── deployment.md
-    ├── monitoring.md
-    └── screenshots/                 # скриншоты дашборда для README
-        ├── 01-dashboard.png
-        ├── 02-architecture.png
-        ├── 02b-architecture-modal.png
-        ├── 03-services.png
-        ├── 04-incidents.png
-        ├── 05-runbook.png
-        ├── 06-api.png
-        └── 07-cli.png
-```
+`monitoring/prometheus/alert.rules.yml`: host CPU, memory, disk and network;
+container down, CPU and memory; API latency and 5xx rate; PostgreSQL, Redis
+and nginx down; PostgreSQL connection saturation; any scrape target down.
 
----
+Two rules that are easy to get wrong:
 
-## Быстрый старт
+- **ContainerDown** compares containers seen in the last hour with those
+  reported now. cAdvisor drops a stopped container's series, so
+  `absent(container_last_seen{name=~".+"})` (the usual first attempt) only
+  fires when *no* container exists at all.
+- **ContainerHighMemory** skips containers without a memory limit, which
+  report a limit of 0 and would otherwise divide by zero.
 
-### 1. Клонирование
+The rules have unit tests (`monitoring/prometheus/tests/alert_rules_test.yml`)
+that CI runs with `promtool test rules`.
+
+## Running it
 
 ```bash
-git clone https://github.com/Imronaxl/AtlasOps.git
-cd AtlasOps
+cp .env.example .env     # change every change_me value
+make up                  # docker compose up -d
+make healthcheck         # containers, endpoints, disk and memory
 ```
 
-### 2. Настройка окружения
-
-```bash
-cp .env.example .env
-# отредактировать .env — заменить все "change_me_*" заглушки
-```
-
-### 3. Поднятие стека
-
-```bash
-make up
-make status
-```
-
-Должно быть 9 healthy-контейнеров: `nginx`, `api`, `postgres`, `redis`, `prometheus`, `grafana`, `alertmanager`, `node-exporter`, `cadvisor`.
-
-### 4. Запуск дашборда
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-Открыть <http://localhost:3000> — индикатор в шапке должен переключиться с `demo` на `live`.
-
-### 5. Доступ к отдельным сервисам
-
-| Сервис | URL | Учётные данные |
-|--------|-----|----------------|
-| Дашборд | http://localhost:3000 | — |
-| API (FastAPI) | http://localhost:8000 | — |
-| Grafana | http://localhost:3000 | admin / (из .env) |
-| Prometheus | http://localhost:9090 | — |
-| Alertmanager | http://localhost:9093 | — |
-
-> Дашборд работает на порту 3000 — это совпадает с портом Grafana по умолчанию. Чтобы избежать конфликта, либо остановите Grafana (`docker compose stop grafana`), либо запустите дашборд на другом порту: `npm run dev -- -p 3001`.
-
----
-
-## Фронтенд-дашборд
-
-Дашборд — это Next.js 16 приложение в директории [`web/`](./web). Состоит из семи секций, доступных из сайдбара:
-
-| Секция | Что показывает |
-|--------|----------------|
-| **Dashboard** | KPI (services up, CPU, memory, P95 latency), живые Recharts-графики, активные инциденты |
-| **Architecture** | Интерактивная топология сервисов с кликабельными деталями |
-| **Services** | Таблица реестра + детальные карточки: статус, порт, образ, аптайм, зависимости |
-| **Incidents** | Таймлайн с фильтрами по severity и active/resolved |
-| **Runbook** | Пошаговые операционные процедуры с командами и ожидаемым результатом |
-| **API** | Интерактивный проводник: метод, путь, curl, пример JSON-ответа |
-| **CLI** | Анимированное демо терминала с `make up`, `make deploy`, `make backup`, ... |
-
-### Ключевые фичи
-
-- **Live / demo режим**: API-клиент имеет таймаут 2.5s и падает на мок-данные. В шапке видно `live` или `demo`, перепроверка каждые 30 секунд.
-- **Тёмная тема** по умолчанию — привычная для DevOps-инструментов (Grafana, Datadog, ...).
-- **framer-motion** — плавные переходы между секциями, пульсирующие status-точки, эффект печати в терминале.
-- **Адаптивность**: сайдбар на десктопе, горизонтальное скролл-меню на мобиле.
-- 
-Подробнее — в [`web/README.md`](./web/README.md).
-
----
-
-## Бэкенд API
-
-FastAPI-приложение в [`api/`](./api). Эндпоинты:
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/health` | Liveness-проба — используется docker healthcheck |
-| GET | `/ready` | Readiness-проба (проверяет зависимости) |
-| GET | `/status` | Сводка по приложению: версия, окружение, аптайм |
-| GET | `/metrics` | Метрики в Prometheus text format |
-| GET | `/api/services` | Список всех отслеживаемых сервисов |
-| GET | `/api/services/{name}` | Один сервис по имени |
-| GET | `/api/services/{name}/health` | Упрощённый health для одного сервиса |
-| GET | `/api/incidents` | Журнал инцидентов (фильтры `?severity=`, `?resolved=`) |
-| GET | `/api/incidents/active` | Только активные (неразрешённые) инциденты |
-| GET | `/api/architecture` | Граф сервисов (nodes + edges + legend) |
-| GET | `/api/metrics/snapshot` | Снимок метрик за час, готовый для Recharts |
-| GET | `/api/runbook` | Все операционные процедуры |
-| GET | `/api/runbook/{id}` | Одна процедура по id |
-
----
-
-## Мониторинг
-
-### Точки доступа
-
-| Сервис | URL |
-|--------|-----|
-| Grafana | http://localhost:3000 |
+| | |
+|---|---|
+| API (through nginx) | http://localhost |
+| API (direct) | http://localhost:8000/docs |
 | Prometheus | http://localhost:9090 |
 | Alertmanager | http://localhost:9093 |
+| Grafana | http://localhost:3000 |
 
-### Дашборды
+Try an incident end to end:
 
-- **Infrastructure Monitoring** — CPU, Memory, Disk, Network, Containers, метрики API
-
-### Правила алертов
-
-| Алерт | Условие | Severity |
-|-------|---------|----------|
-| HighCPUUsage | CPU > 80% в течение 5m | Warning |
-| HighMemoryUsage | Memory > 90% в течение 5m | Warning |
-| HighDiskUsage | Disk > 85% в течение 5m | Warning |
-| ContainerDown | Контейнер упал на 1m | Critical |
-| ContainerHighCPU | CPU контейнера > 80% в течение 5m | Warning |
-| APILatencyHigh | p95 > 1s в течение 5m | Warning |
-| HighErrorRate | 5xx > 5% в течение 5m | Critical |
-| DiskSpaceLow | < 5GB свободного места в течение 5m | Critical |
-
----
-
-## Скрипты
-
-| Скрипт | Описание |
-|--------|----------|
-| `scripts/deploy.sh` | Zero-downtime деплой |
-| `scripts/backup.sh` | Бэкап PostgreSQL со сжатием |
-| `scripts/restore.sh` | Восстановление БД с safety-бэкапом |
-| `scripts/healthcheck.sh` | Полная проверка здоровья |
-| `scripts/rotate_logs.sh` | Ротация и очистка логов |
-| `scripts/cleanup.sh` | Очистка Docker-ресурсов |
-
-Удобные Make-таргеты оборачивают все скрипты: `make deploy`, `make backup`, `make restore`, `make healthcheck`, `make rotate-logs`, `make cleanup`.
-
----
-
-## CI/CD
-
-Пайплайн живёт в [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). На каждый пуш / PR в `main`:
-
-```
-┌─────────────┬─────────────┬─────────────┬─────────────┐
-│  backend    │  frontend   │   docker    │    misc     │
-│ (FastAPI)   │ (Next.js)   │ (compose)   │ (yaml/sh/md)│
-├─────────────┼─────────────┼─────────────┼─────────────┤
-│ ruff lint   │ npm install │ compose     │ yamllint    │
-│ ruff format │ eslint      │  config     │ shellcheck  │
-│ pytest      │ tsc --noEmit│ hadolint x2 │ markdownlint│
-└─────────────┴─────────────┴─────────────┴─────────────┘
+```bash
+docker compose stop redis                       # RedisDown fires after 1 minute
+curl -s localhost:8000/api/incidents/active     # stored by the webhook
+docker compose start redis                      # the incident gets an end time
 ```
 
-Все четыре джобы идут параллельно. Пайплайн должен быть зелёным перед мержем.
+The dashboard runs separately:
 
----
+```bash
+cd web && bun install && bun run dev            # http://localhost:3001
+```
+
+It reads the API at `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`);
+the API must list the dashboard's origin in `CORS_ORIGINS`.
+
+## Operations
+
+`make help` lists everything. The scripts in `scripts/` pass ShellCheck.
+
+| Command | |
+|---|---|
+| `make deploy` | Validate compose, build, `up -d`, wait for health checks |
+| `make backup` | `pg_dump` to `backups/backup_<timestamp>.sql.gz`, keep 7 days |
+| `make restore FILE=…` | Restore a dump after confirmation |
+| `make healthcheck` | Exit code 1 if any container or endpoint is unhealthy |
+| `make rotate-logs`, `make cleanup` | Log rotation, Docker cleanup |
+| `make test`, `make lint` | API tests and alert rule tests; ruff, ShellCheck, promtool, amtool |
+
+`systemd/infra-monitor.service` starts the stack at boot with
+`docker compose up --wait`. Operational procedures (deploy, backup, restore,
+high CPU, low disk) are also served by the API at `/api/runbook` and shown in
+the dashboard.
+
+## Tests and CI
+
+- API tests run against a real PostgreSQL with a fake Prometheus (an
+  `httpx.MockTransport`) and fakeredis: health and readiness, service status
+  mapping, caching, snapshot parsing, the alert lifecycle and webhook auth.
+- `promtool test rules` checks that ContainerDown, PostgresDown and
+  HighErrorRate fire when they should and ContainerHighMemory does not fire
+  for unlimited containers.
+- CI also runs ShellCheck, yamllint, hadolint, `promtool check rules`,
+  `amtool check-config`, the dashboard's lint, type check and build, builds
+  the images and scans dependencies with Trivy.
+
+## Screenshots
+
+The dashboard below was taken with the API, PostgreSQL, Redis, Prometheus,
+Alertmanager, node-exporter and the database exporters running locally;
+services that were not started show as `unknown`.
+
+| | |
+|---|---|
+| ![Services](docs/screenshots/services.png) | ![Incidents](docs/screenshots/incidents.png) |
+
+![Architecture](docs/screenshots/architecture.png)
+
+## License
+
+MIT
