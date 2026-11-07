@@ -1,6 +1,6 @@
 [Unit]
 Description=Infrastructure Monitoring Platform
-Documentation=https://github.com/ImronAXL/infra-monitor
+Documentation=https://github.com/Imronaxl/atlasops
 After=docker.service network-online.target
 Requires=docker.service
 Wants=network-online.target
@@ -15,8 +15,8 @@ EnvironmentFile=-/opt/infra-monitor/.env
 Environment=COMPOSE_PROJECT_NAME=infra-monitor
 
 ExecStartPre=/usr/bin/docker compose config --quiet
-ExecStart=/usr/bin/docker compose up -d --remove-orphans
-ExecStart=/bin/bash -c 'sleep 10 && /opt/infra-monitor/scripts/healthcheck.sh'
+# --wait returns once every service with a healthcheck reports healthy.
+ExecStart=/usr/bin/docker compose up -d --remove-orphans --wait
 
 ExecStop=/usr/bin/docker compose down
 

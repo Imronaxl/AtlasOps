@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 BOLD='\033[1m'
 
-BACKUP_DIR="${BACKUP_DIR:-/opt/backups/infra-monitor}"
+BACKUP_DIR="${BACKUP_DIR:-./backups}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CONTAINER="infra-postgres"

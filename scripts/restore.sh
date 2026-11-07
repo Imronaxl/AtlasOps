@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 BOLD='\033[1m'
 
-BACKUP_DIR="${BACKUP_DIR:-/opt/backups/infra-monitor}"
+BACKUP_DIR="${BACKUP_DIR:-./backups}"
 CONTAINER="infra-postgres"
 
 log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"; }
@@ -26,7 +26,7 @@ usage() {
     echo ""
     echo "Examples:"
     echo "  $0                                    # List available backups"
-    echo "  $0 /opt/backups/backup_20240101.sql.gz"
+    echo "  $0 ./backups/backup_20240101.sql.gz"
     exit 1
 }
 

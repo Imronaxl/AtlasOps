@@ -10,7 +10,7 @@ BOLD='\033[1m'
 
 MAX_LOG_SIZE_MB=50
 RETENTION_DAYS=30
-LOG_DIR="/var/log/infra-monitor"
+LOG_DIR="${LOG_DIR:-./logs}"
 
 log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"; }
 success() { echo -e "${GREEN}[✓]${NC} $1"; }

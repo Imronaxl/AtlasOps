@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 BOLD='\033[1m'
 
-LOG_FILE="/var/log/infra-monitor/deploy.log"
+LOG_FILE="${LOG_DIR:-./logs}/deploy.log"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"; }
@@ -56,16 +56,18 @@ MAX_WAIT=60
 INTERVAL=5
 ELAPSED=0
 
+# Only containers that define a HEALTHCHECK report health; exporters do not.
 while [[ $ELAPSED -lt $MAX_WAIT ]]; do
-    HEALTHY=$(docker compose ps --format json 2>/dev/null | grep -c '"healthy"' || true)
-    TOTAL=$(docker compose ps --format json 2>/dev/null | wc -l || true)
+    HEALTH=$(docker compose ps --format '{{.Health}}' 2>/dev/null | grep -v '^$' || true)
+    TOTAL=$(grep -c . <<< "$HEALTH" || true)
+    HEALTHY=$(grep -c '^healthy$' <<< "$HEALTH" || true)
 
-    if [[ "$HEALTHY" -eq "$TOTAL" ]] && [[ "$TOTAL" -gt 0 ]]; then
-        success "All ${TOTAL} services are healthy"
+    if [[ "$TOTAL" -gt 0 ]] && [[ "$HEALTHY" -eq "$TOTAL" ]]; then
+        success "All ${TOTAL} services with health checks are healthy"
         break
     fi
 
-    log "  ${HEALTHY}/${TOTAL} services healthy (waiting ${ELAPSED}s/${MAX_WAIT}s)"
+    log "  ${HEALTHY}/${TOTAL} health checks passing (waiting ${ELAPSED}s/${MAX_WAIT}s)"
     sleep "$INTERVAL"
     ELAPSED=$((ELAPSED + INTERVAL))
 done

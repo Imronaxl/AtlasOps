@@ -21,12 +21,13 @@ check_container() {
     local name=$1
     CHECKS_TOTAL=$((CHECKS_TOTAL + 1))
 
+    # Containers without a HEALTHCHECK report their run state instead.
     local status
-    status=$(docker inspect --format='{{.State.Health.Status}}' "$name" 2>/dev/null || echo "not_found")
+    status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$name" 2>/dev/null || echo "not_found")
 
     case "$status" in
-        healthy)
-            success "${name}: healthy"
+        healthy|running)
+            success "${name}: ${status}"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
             ;;
         unhealthy)
@@ -101,7 +102,9 @@ log "${BOLD}Infrastructure Health Check${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 log "${BOLD}Container Health${NC}"
-for container in infra-nginx infra-api infra-postgres infra-redis infra-prometheus infra-grafana infra-alertmanager infra-node-exporter infra-cadvisor; do
+for container in infra-nginx infra-api infra-postgres infra-redis infra-prometheus infra-grafana \
+    infra-alertmanager infra-node-exporter infra-cadvisor infra-postgres-exporter \
+    infra-redis-exporter infra-nginx-exporter; do
     check_container "$container"
 done
 
@@ -109,6 +112,7 @@ echo ""
 log "${BOLD}Endpoint Health${NC}"
 check_endpoint "Nginx" "http://127.0.0.1:80/health" 200
 check_endpoint "API" "http://127.0.0.1:8000/health" 200
+check_endpoint "API dependencies" "http://127.0.0.1:8000/ready" 200
 check_endpoint "Prometheus" "http://127.0.0.1:9090/-/healthy" 200
 check_endpoint "Grafana" "http://127.0.0.1:3000/api/health" 200
 check_endpoint "Alertmanager" "http://127.0.0.1:9093/-/healthy" 200
