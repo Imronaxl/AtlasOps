@@ -40,10 +40,26 @@ scrape_configs:
 
   - job_name: "nginx"
     static_configs:
-      - targets: ["nginx:80"]
-    metrics_path: /stub_status
-    scrape_interval: 10s
+      - targets: ["nginx-exporter:9113"]
+        labels:
+          service: nginx
+
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: postgres
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: redis
 
   - job_name: "alertmanager"
     static_configs:
       - targets: ["alertmanager:9093"]
+
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]

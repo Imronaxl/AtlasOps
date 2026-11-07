@@ -1,0 +1,69 @@
+# Run with: promtool test rules monitoring/prometheus/tests/alert_rules_test.yml
+rule_files:
+  - ../alert.rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: a stopped container fires ContainerDown, running ones do not
+    interval: 1m
+    input_series:
+      - series: 'container_last_seen{name="infra-api"}'
+        values: "1+60x15"
+      - series: 'container_last_seen{name="infra-redis"}'
+        # Stops at 3m. A test series has no staleness marker, so it stays
+        # visible for the 5m lookback; in a real scrape it vanishes at once.
+        values: "1+60x3 _x12"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ContainerDown
+        exp_alerts:
+          - exp_labels: {severity: critical, name: infra-redis}
+            exp_annotations:
+              summary: "Container infra-redis is down"
+              description: "infra-redis was running in the last hour and is no longer reported by cAdvisor."
+
+  - name: database down for a minute
+    interval: 30s
+    input_series:
+      - series: 'pg_up{job="postgres"}'
+        values: "1 1 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 1m30s
+        alertname: PostgresDown
+        exp_alerts: []   # still pending
+      - eval_time: 2m30s
+        alertname: PostgresDown
+        exp_alerts:
+          - exp_labels: {severity: critical, service: postgres, job: postgres}
+            exp_annotations:
+              summary: "PostgreSQL is down"
+              description: "postgres-exporter cannot connect to the database."
+
+  - name: error rate above 5 percent
+    interval: 1m
+    input_series:
+      - series: 'http_requests_total{job="api",status="200"}'
+        values: "0+90x15"
+      - series: 'http_requests_total{job="api",status="500"}'
+        values: "0+10x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels: {severity: critical}
+            exp_annotations:
+              summary: "High API error rate"
+              description: "More than 5% of requests are returning 5xx errors."
+
+  - name: containers without a memory limit are ignored
+    interval: 1m
+    input_series:
+      - series: 'container_memory_working_set_bytes{name="infra-api"}'
+        values: "1e9x10"
+      - series: 'container_spec_memory_limit_bytes{name="infra-api"}'
+        values: "0x10"
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ContainerHighMemory
+        exp_alerts: []

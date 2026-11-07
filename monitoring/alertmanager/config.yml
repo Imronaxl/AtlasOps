@@ -1,53 +1,31 @@
 global:
   resolve_timeout: 5m
-  smtp_smarthost: "smtp.example.com:587"
-  smtp_from: "alerts@example.com"
-  smtp_auth_username: "alerts@example.com"
-  smtp_auth_password: "changeme"
-  smtp_require_tls: true
-
-templates:
-  - "/etc/alertmanager/templates/*.tmpl"
 
 route:
-  receiver: "default"
+  receiver: api
   group_by: ["alertname", "instance"]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-
   routes:
-    - match:
-        severity: critical
-      receiver: "critical"
+    - matchers: ['severity="critical"']
+      receiver: api
       group_wait: 10s
       repeat_interval: 1h
 
-    - match:
-        severity: warning
-      receiver: "warning"
-      group_wait: 30s
-      repeat_interval: 4h
-
 receivers:
-  - name: "default"
+  # The API stores every firing and resolved alert as an incident.
+  # Add email, Slack or PagerDuty receivers next to it for real paging.
+  - name: api
     webhook_configs:
-      - url: "https://hooks.example.com/alerts"
+      - url: http://api:8000/api/alerts
         send_resolved: true
-
-  - name: "critical"
-    webhook_configs:
-      - url: "https://hooks.example.com/alerts"
-        send_resolved: true
-
-  - name: "warning"
-    webhook_configs:
-      - url: "https://hooks.example.com/alerts"
-        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /tmp/webhook_token
 
 inhibit_rules:
-  - source_match:
-      severity: "critical"
-    target_match:
-      severity: "warning"
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
     equal: ["alertname", "instance"]

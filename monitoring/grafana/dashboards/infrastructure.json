@@ -303,7 +303,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{name=~\".+\"}",
+          "expr": "container_memory_working_set_bytes{name=~\".+\"}",
           "legendFormat": "{{ name }}",
           "refId": "A"
         }
@@ -401,7 +401,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[5m])) by (status)",
+          "expr": "sum(rate(http_requests_total{job=\"api\"}[5m])) by (status)",
           "legendFormat": "{{ status }}",
           "refId": "A"
         }
@@ -429,12 +429,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])))",
           "legendFormat": "p95",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])))",
           "legendFormat": "p50",
           "refId": "B"
         }
