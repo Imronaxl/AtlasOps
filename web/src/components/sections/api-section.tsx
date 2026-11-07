@@ -3,19 +3,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code2, Terminal } from "lucide-react";
-import { MOCK_API_ENDPOINTS } from "@/lib/mock-data";
+import { API_ENDPOINTS } from "@/lib/content";
 import { CodeBlock } from "@/components/atlas/code-block";
 import type { ApiEndpoint } from "@/lib/types";
 
 export function ApiSection() {
-  const [selected, setSelected] = useState<ApiEndpoint>(MOCK_API_ENDPOINTS[0]);
+  const [selected, setSelected] = useState<ApiEndpoint>(API_ENDPOINTS[0]);
 
   const methodColor = (m: ApiEndpoint["method"]) => {
     switch (m) {
       case "GET": return "text-status-healthy border-status-healthy bg-status-healthy";
       case "POST": return "text-status-degraded border-status-degraded bg-status-degraded";
-      case "PUT": return "text-blue-400 border-blue-400/40 bg-blue-400/10";
-      case "DELETE": return "text-status-unhealthy border-status-unhealthy bg-status-unhealthy";
     }
   };
 
@@ -33,10 +31,9 @@ export function ApiSection() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {}
         <div className="rounded-lg border border-border bg-card p-2 max-h-[600px] overflow-y-auto atlas-scroll">
           <div className="space-y-1">
-            {MOCK_API_ENDPOINTS.map((ep) => (
+            {API_ENDPOINTS.map((ep) => (
               <button
                 key={ep.path}
                 type="button"
@@ -60,7 +57,6 @@ export function ApiSection() {
           </div>
         </div>
 
-        {}
         <div className="lg:col-span-2 rounded-lg border border-border bg-card p-4">
           <AnimatePresence mode="wait">
             <motion.div

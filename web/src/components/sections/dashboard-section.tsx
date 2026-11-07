@@ -39,6 +39,7 @@ import {
 import type {
   ServiceInfo,
   Incident,
+  MetricSeries,
   MetricsSnapshot,
 } from "@/lib/types";
 
@@ -78,6 +79,14 @@ export function DashboardSection() {
   const degradedCount = services.filter((s) => s.status === "degraded").length;
   const unhealthyCount = services.filter((s) => s.status === "unhealthy").length;
   const activeIncidents = incidents.filter((i) => !i.resolved);
+  const unknownCount = services.filter((s) => s.status === "unknown").length;
+  // Firing alerts count as much as failed health checks.
+  const overall =
+    unhealthyCount > 0 || activeIncidents.some((i) => i.severity === "critical")
+      ? "unhealthy"
+      : degradedCount > 0 || activeIncidents.length > 0
+        ? "degraded"
+        : "healthy";
   const uptime = metrics?.current.uptime_seconds ?? 0;
 
   if (loading) {
@@ -95,7 +104,6 @@ export function DashboardSection() {
 
   return (
     <div className="space-y-6">
-      {}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,17 +113,18 @@ export function DashboardSection() {
         <div className="flex flex-wrap items-center gap-4 justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <StatusDot status={unhealthyCount > 0 ? "unhealthy" : degradedCount > 0 ? "degraded" : "healthy"} />
+              <StatusDot status={overall} />
               <h2 className="text-xl font-semibold">
-                {unhealthyCount > 0
+                {overall === "unhealthy"
                   ? "System requires attention"
-                  : degradedCount > 0
-                    ? "System is running with degradation"
+                  : overall === "degraded"
+                    ? "System is running with warnings"
                     : "All systems nominal"}
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              {healthyCount} of {services.length} services healthy.
+              {healthyCount} of {services.length} services healthy
+              {unknownCount > 0 ? `, ${unknownCount} without data` : ""}.
               {" "}
               {activeIncidents.length > 0
                 ? `${activeIncidents.length} active incidents.`
@@ -124,7 +133,7 @@ export function DashboardSection() {
           </div>
           <div className="text-right">
             <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              Uptime
+              API uptime
             </div>
             <div className="font-mono text-2xl text-status-healthy">
               {formatUptime(uptime)}
@@ -133,7 +142,6 @@ export function DashboardSection() {
         </div>
       </motion.div>
 
-      {}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard
           label="Services up"
@@ -168,7 +176,6 @@ export function DashboardSection() {
         />
       </div>
 
-      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard
           title="CPU & Memory"
@@ -178,11 +185,7 @@ export function DashboardSection() {
           {metrics && (
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart
-                data={metrics.series[0].points.map((p, i) => ({
-                  t: formatUnixMinute(p.t),
-                  cpu: p.value,
-                  memory: metrics.series[1].points[i].value,
-                }))}
+                data={mergeSeries(metrics, "cpu", "memory")}
               >
                 <defs>
                   <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
@@ -220,10 +223,7 @@ export function DashboardSection() {
           {metrics && (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart
-                data={metrics.series[2].points.map((p) => ({
-                  t: formatUnixMinute(p.t),
-                  rps: p.value,
-                }))}
+                data={mergeSeries(metrics, "requests").map(({ t, requests }) => ({ t, rps: requests }))}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0 0 / 40%)" />
                 <XAxis dataKey="t" stroke="oklch(0.6 0 0)" fontSize={10} tickLine={false} />
@@ -243,7 +243,6 @@ export function DashboardSection() {
         </ChartCard>
       </div>
 
-      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -274,7 +273,6 @@ export function DashboardSection() {
         </div>
       </div>
 
-      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -360,4 +358,18 @@ function ChartCard({
       {children}
     </div>
   );
+}
+
+/** Joins series by timestamp; Prometheus may return a different number of points per series. */
+function mergeSeries(metrics: MetricsSnapshot, ...names: MetricSeries["name"][]) {
+  const rows = new Map<number, Record<string, number | string>>();
+  for (const name of names) {
+    const series = metrics.series.find((s) => s.name === name);
+    for (const p of series?.points ?? []) {
+      const row = rows.get(p.t) ?? { t: formatUnixMinute(p.t) };
+      row[name] = p.value;
+      rows.set(p.t, row);
+    }
+  }
+  return [...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => row);
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Terminal as TerminalIcon, Play, Pause, RotateCcw } from "lucide-react";
-import { MOCK_CLI_DEMO } from "@/lib/mock-data";
+import { CLI_DEMO } from "@/lib/content";
 
 export function CliSection() {
   const [stepIdx, setStepIdx] = useState(0);
@@ -11,14 +11,12 @@ export function CliSection() {
   const [visibleLines, setVisibleLines] = useState(0);
   const [showCommand, setShowCommand] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const step = MOCK_CLI_DEMO[stepIdx];
+  const step = CLI_DEMO[stepIdx];
 
   
   useEffect(() => {
     if (!playing) return;
 
-    
-    
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
@@ -33,8 +31,6 @@ export function CliSection() {
 
     
     let lineIdx = 0;
-    
-    
     let nextTimer: ReturnType<typeof setTimeout> | null = null;
     const lineTimer = setInterval(() => {
       if (cancelled) return;
@@ -44,7 +40,7 @@ export function CliSection() {
         clearInterval(lineTimer);
         
         nextTimer = setTimeout(() => {
-          if (!cancelled) setStepIdx((prev) => (prev + 1) % MOCK_CLI_DEMO.length);
+          if (!cancelled) setStepIdx((prev) => (prev + 1) % CLI_DEMO.length);
         }, 1800);
       }
     }, 180);
@@ -101,9 +97,8 @@ export function CliSection() {
         </div>
       </div>
 
-      {}
       <div className="flex flex-wrap gap-1.5">
-        {MOCK_CLI_DEMO.map((s, i) => (
+        {CLI_DEMO.map((s, i) => (
           <button
             key={i}
             type="button"
@@ -121,9 +116,7 @@ export function CliSection() {
         ))}
       </div>
 
-      {}
       <div className="rounded-lg overflow-hidden border border-border">
-        {}
         <div className="flex items-center gap-2 px-3 py-2 bg-background/60 border-b border-border">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-status-unhealthy" />
@@ -135,7 +128,6 @@ export function CliSection() {
           </span>
         </div>
 
-        {}
         <div
           ref={terminalRef}
           className="terminal p-4 h-[400px] overflow-y-auto atlas-scroll"
@@ -182,11 +174,10 @@ export function CliSection() {
         </div>
       </div>
 
-      {}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-mono text-muted-foreground">
-            step {stepIdx + 1} / {MOCK_CLI_DEMO.length}
+            step {stepIdx + 1} / {CLI_DEMO.length}
           </span>
         </div>
         <div className="font-mono text-sm mb-2">{step.command}</div>

@@ -4,16 +4,12 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Boxes, X } from "lucide-react";
 import { fetchArchitecture } from "@/lib/api";
-import { MOCK_ARCHITECTURE } from "@/lib/mock-data";
-import {
-  kindIcon,
-  kindLabel,
-  statusColor,
-} from "@/lib/format";
-import type { Architecture, ArchNode, ServiceStatus } from "@/lib/types";
+import { ARCHITECTURE_FALLBACK } from "@/lib/content";
+import { kindIcon, kindLabel } from "@/lib/format";
+import type { Architecture, ArchNode } from "@/lib/types";
 
 export function ArchitectureSection() {
-  const [arch, setArch] = useState<Architecture>(MOCK_ARCHITECTURE);
+  const [arch, setArch] = useState<Architecture>(ARCHITECTURE_FALLBACK);
   const [selected, setSelected] = useState<ArchNode | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +17,7 @@ export function ArchitectureSection() {
     let cancelled = false;
     fetchArchitecture().then((a) => {
       if (cancelled) return;
-      setArch(a);
+      if (a) setArch(a);
       setLoading(false);
     });
     return () => {
@@ -29,9 +25,7 @@ export function ArchitectureSection() {
     };
   }, []);
 
-  
-  
-  const xToPct = (x: number) => ((x - 1) / 10) * 90 + 5;
+  const xToPct = (x: number) => ((x - 1) / 10) * 84 + 5;
   const yToPct = (y: number) => ((3 - y) / 4) * 80 + 10;
 
   
@@ -72,7 +66,7 @@ export function ArchitectureSection() {
                   className="px-2 py-1 rounded border border-border/60 bg-background/40"
                   title={v}
                 >
-                  {kindIcon(k as any)} {k}
+                  {kindIcon(k)} {k}
                 </span>
               ))}
           </div>
@@ -84,7 +78,6 @@ export function ArchitectureSection() {
           className="relative arch-grid"
           style={{ height: "540px" }}
         >
-          {}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
             preserveAspectRatio="none"
@@ -159,7 +152,6 @@ export function ArchitectureSection() {
             })}
           </svg>
 
-          {}
           {arch.nodes.map((node, i) => (
             <motion.button
               key={node.id}
@@ -203,7 +195,6 @@ export function ArchitectureSection() {
         </div>
       </div>
 
-      {}
       <div className="rounded-lg border border-border bg-card p-3 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-6 h-px bg-status-healthy inline-block" />
@@ -222,7 +213,6 @@ export function ArchitectureSection() {
         </div>
       </div>
 
-      {}
       <AnimatePresence>
         {selected && (
           <motion.div

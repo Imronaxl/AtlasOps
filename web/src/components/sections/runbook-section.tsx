@@ -4,20 +4,20 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, ChevronDown, ChevronRight, Terminal } from "lucide-react";
 import { fetchRunbooks } from "@/lib/api";
-import { MOCK_RUNBOOKS } from "@/lib/mock-data";
+import { RUNBOOKS_FALLBACK } from "@/lib/content";
 import { severityBadgeClasses } from "@/lib/format";
 import { CodeBlock } from "@/components/atlas/code-block";
 import type { Runbook } from "@/lib/types";
 
 export function RunbookSection() {
-  const [runbooks, setRunbooks] = useState<Runbook[]>(MOCK_RUNBOOKS);
+  const [runbooks, setRunbooks] = useState<Runbook[]>(RUNBOOKS_FALLBACK);
   const [open, setOpen] = useState<string | null>("deploy");
 
   useEffect(() => {
     let cancelled = false;
     fetchRunbooks().then((r) => {
       if (cancelled) return;
-      setRunbooks(r);
+      if (r) setRunbooks(r);
     });
     return () => {
       cancelled = true;

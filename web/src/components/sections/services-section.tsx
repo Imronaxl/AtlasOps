@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Server } from "lucide-react";
 import { fetchServices } from "@/lib/api";
-import { MOCK_SERVICES } from "@/lib/mock-data";
 import {
   formatUptime,
   kindIcon,
@@ -15,7 +14,7 @@ import type { ServiceInfo } from "@/lib/types";
 import { StatusDot } from "@/components/atlas/status-dot";
 
 export function ServicesSection() {
-  const [services, setServices] = useState<ServiceInfo[]>(MOCK_SERVICES);
+  const [services, setServices] = useState<ServiceInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +37,11 @@ export function ServicesSection() {
           Services registry
         </h2>
         <p className="text-xs text-muted-foreground">
-          {services.length} services. Health-check every 15s.
+          {loading
+            ? "Loading…"
+            : services.length > 0
+              ? `${services.length} services. Health from Prometheus, uptime from cAdvisor.`
+              : "API or Prometheus unavailable."}
         </p>
       </div>
 
@@ -125,7 +128,6 @@ export function ServicesSection() {
         </div>
       </div>
 
-      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {services.map((s, i) => (
           <motion.div

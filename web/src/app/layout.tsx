@@ -1,45 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "AtlasOps — Infrastructure Monitoring",
-  description:
-    "DevOps monitoring platform: FastAPI + PostgreSQL + Redis + Nginx + Prometheus + Grafana. Junior DevOps portfolio project.",
-  keywords: [
-    "DevOps",
-    "Monitoring",
-    "FastAPI",
-    "Prometheus",
-    "Grafana",
-    "Docker",
-    "Infrastructure",
-  ],
-  authors: [{ name: "AtlasOps" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
-  openGraph: {
-    title: "AtlasOps — Infrastructure Monitoring",
-    description: "DevOps monitoring platform: live dashboard, runbook, architecture explorer.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "AtlasOps — Infrastructure Monitoring",
-    description: "DevOps monitoring platform for a junior DevOps portfolio.",
-  },
+  title: "AtlasOps",
+  description: "Infrastructure monitoring: service health, metrics, alerts and runbooks.",
+  icons: { icon: "/logo.svg" },
 };
 
 export default function RootLayout({
@@ -49,11 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
-      >
+      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
         {children}
-        <Toaster />
       </body>
     </html>
   );
