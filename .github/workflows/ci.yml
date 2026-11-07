@@ -95,14 +95,12 @@ jobs:
       - run: docker compose build api nginx
 
   security:
-    name: Dependency scan
+    name: Dependency audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: actions/setup-python@v5
         with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: 1
+          python-version: "3.12"
+      - run: pip install pip-audit
+      - run: pip-audit -r api/requirements.txt

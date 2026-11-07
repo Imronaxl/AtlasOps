@@ -141,7 +141,7 @@ the dashboard.
   for unlimited containers.
 - CI also runs ShellCheck, yamllint, hadolint, `promtool check rules`,
   `amtool check-config`, the dashboard's lint, type check and build, builds
-  the images and scans dependencies with Trivy.
+  the images and audits the API's pinned dependencies with pip-audit.
 
 ## Screenshots
 
